@@ -1,0 +1,26 @@
+---
+title: 'Creating SSH Key pairs'
+description: ''
+---
+
+To generate an SSH key pair (private and public) to be used by one or more of your SFTP users you will need to do the following:
+
+On macOS and other Unix operating systems, run the following command to generate an RSA key-pair:
+
+```shell
+ssh-keygen -P '' -f transfer-key
+```
+
+Run the following command to generate an ECDSA key-pair:
+
+```shell
+ssh-keygen -t ecdsa -b 256 -N '' -m PEM -f transfer-key
+```
+
+Valid values for the \-b option for ECDSA are 256, 384, and 521\. Run the following command to generate an ED25519 key-pair:
+
+```shell
+ssh-keygen -t ed25519 -f transfer-key
+```
+
+These commands generate a public and private key pair. You will need to upload or email the public key to your counterpart at Aidin.. The private key stays local to the disk to the SFTP client, where you will need to supply the private key during SFTP client authentication. Windows users can do the equivalent operation using PuTTYgen.

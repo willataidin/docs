@@ -1,0 +1,87 @@
+---
+title: 'DocumentReference.Create Payloads '
+description: ''
+---
+
+
+Both After Visit Summary and Progress Notes updates are delivered from Aidin to Epic using the DocumentReference.Create FHIR endpoint. Please make sure that your FHIR integration is already set up and tested according to the steps in Appendix 4 before continuing.
+
+#### **Sample progress note headers** 
+
+```
+POST /interconnect-amcurprd-oauth/api/FHIR/STU3/DocumentReference HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Epic-Client-Id: dbfb3da9-9117-4502-b9a2-37421fab1a57
+Accept-Encoding: gzip;q=1.0,deflate;q=0.6,identity;q= 0.3
+User-Agent: Ruby
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1cm46ZXBpYzphcHBvcmNoYXJkLmN1cnByb2QiLCJjbGllbnRfaWQiOiJkYmZiM2RhOS05MTE3LTQ1MDItYjlhMi0zNzQyMWZhYjFhNTciLCJlcGljLmVjaSI6InVybjplcGljOkN1cnJlbnQtQXBwLU9yY2h hcmQtUHJvZHVjdGlvbiIsImVwaWMubWV0YWRhdGEiOiJCMFZvWndxTElyOVhjMEkyckpYSE5UTm1mRXZWSmFtVDdNdkZuUGlMdkpqQm9LTFdwOHBva0ZBOW5DcWF5WFpka3VuWkRpNU90TENSRmgxUi1vcWNrMWNPUDJyNkJHNG02Ml80dU03c2ZWaDk2MEJBZDJhZzRpTjZJT2YxR05hNyIsImVwaWMudG9rZW50eXBlIjoiYWNjZXNzIiwi ZXhwIjoxNzUwODY5NzY2LCJpYXQiOjE3NTA4NjYxNjYsImlzcyI6InVybjplcGljOmFwcG9yY2hhcmQuY3VycHJvZCIsImp0aSI6IjExMTgwYzY5LWIzZWUtNDk0ZS1iNzMwLWU1ODdjMjQyNTM2NiIsIm5iZiI6MTc1MDg2NjE2Niwic3ViIjoiZWJHZWV1UHhhMno0MDM5QzVmVFV1OEEzIn0.jLRzIUC8LP05bRD5j1BrjL9lj_07_kKOP o0uoxyLKroXFwlWiw9OsvsKAnThlOKQeKjFqigUWspMl3Al7sO8AJZuytoZlEB8xy-C66_SWfg4rW6U9xHijJ7HmF6sjuetoKB5I7OrM5odQL9X5aJI12EHiIeqePQx74UN6IJgCVZIjB-E49R0C-3FPe1_PTVO6Zeu5y6CS3MEh68M9SD2wdiFRmB3SRcZ4IToDOzEtdt-dK7z-rxJKtKrAR8vzRO6-u117eMMRiQSw2K5dFG-RPDqUjM3pX y1Pw9kC9mcQtlXcLYzDrRYJYVXRrpubiSl70A4PCnj_LXFoBSM0m1NxA
+Host: vendorservices.epic.com
+Content-Length: 1029
+```
+
+#### **Sample progress note payload body**
+
+```json
+{
+  "content": [
+    {
+      "attachment": {
+        "contentType": "text/plain",
+        "data": "UGF0aWVudDoKSm9obiBEb2UKCk1STjoKOTk5ODg4CgpBaWRpbiBSZXF1ZXN0\nIElEOgo5OTk4ODgKCkxldmVsIG9mIGNhcmUgcmVzZXJ2ZWQ6ClRyYW5zcG9y\ndGF0aW9uCgpQYXJ0bmVyIFJlc2VydmVkOgpNYW5vcmNhcmUgTnVyc2luZyBI\nb21lLCBBbGV4YW5kcmlhLCBWQSAyMjAzOSA3MDMtMjIyLTIyMj
+IKCkNsaW5p\nY2FsIG5lZWRzIHJlcXVlc3RlZDoKd291bmQgY2FyZSwgcGh5c2ljYWwgdGhl\ncmFweQoKR2VvZ3JhcGh5IHNlYXJjaGVkOgoxNSBtaWxlcyBhcm91bmQgOTAy\nMTAKClN0YXJ0IG9mIFNlcnZpY2U6CjEwLzEyLzIwMjAKClBpY2t1cC9hcHBv\naW50bWVudCB0aW1lOgozOjA1cG0gRVNUIG9uIDIvNC8yMDIxCgpSZXF
+1ZXN0\nIHNlbnQ6CjE6MTBwbSBFU1Qgb24gMi8yLzIwMjEgYnkgUnVzcyBHcmFuZXkK\nClBhcnRuZXIgcmVzZXJ2ZWQ6CjEwOjEwYW0gRVNUIG9uIDIvMS8yMDIxIGJ5\nIFJ1c3MgR3JhbmV5CgpDaG9pY2UgbGlzdCBzaGFyZWQ6CjEwOjEwYW0gRVNU\nIG9uIDIvMi8yMDIxIGJ5IFJ1c3MgR3JhbmV5Cg==\n"
+      }
+    }
+  ],
+  "context": {
+    "encounter": {
+      "reference": "eYWExOnM9wfSn4pRqourt6Q3"
+    }
+  },
+  "docStatus": "final",
+  "resourceType": "DocumentReference",
+  "subject": {
+    "reference": "enh2Q1c0oNRtWzXArnG4tKw3"
+  },
+  "type": {
+    "coding": [
+      {
+        "code": "11506-3",
+        "system": "http://loinc.org"
+      }
+    ]
+  }
+}
+
+```
+
+In the example payload above, LOINC code [11506-3](https://loinc.org/11506-3/) is a progress note.  If you would like us to send AVS payloads, we will need you to provide the specific code and system values for your installation, which may look something like the following:
+
+```json
+ "type": {
+    "coding": [
+      {
+        "code": "304100010",
+        "system": "urn:oid:1.2.840.114350.1.13.361.2.7.4.737880.5010"
+      }
+    ]
+  }
+```
+
+#### **Testing (Progress Note)**
+
+Log into Aidin and begin by creating a new referral for the patient. Then, navigate to the Provider Search tab and enter the required search criteria, before clicking "Save and Search." Once the list of providers populates, click the green button to send the referral to the selected providers. You will then be prompted to set a start of service date and a deadline; once these fields are completed, click "Send to Provider." 
+
+Click on "Manage" in the top-right corner of the Patient Details tab and select "Send to Medical Records." From the list, check "Referral Details," then click "Confirm."  
+
+To verify that the note  was successfully sent, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. To verify the successful transmission of the note, navigate back to EPIC and confirm that the Progress Note (Referral Details) appears in the Progress Notes section of the patient’s chart.
+
+#### **Testing (AVS Note)** 
+
+On the Overview tab, navigate to the “0 of 6 Providers Available” section and click the ellipsis (...) under “Manage” then click “Reserve Provider” to reserve a provider for the referral.
+
+Click on "Manage" in the top-right corner of the Patient Details tab and select "Send to Medical Records." From the list, check "AVS details," then click "Confirm." Please note that the AVS details will remain unchecked until a provider is reserved on the referral.  
+
+To verify that the note  was successfully sent, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. Then, navigate back  to Epic and confirm that the AVS details appear in the AVS print-group section of the patient’s chart.
+

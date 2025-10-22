@@ -1,0 +1,201 @@
+---
+title: 'ADT Feed Integration'
+description: ''
+---
+
+The ADT (Admission, Discharge, Transfer) HL7 interface sends real-time patient demographic, visit, and insurance information to Aidin, supporting referral workflows, census visibility, and readmission tracking. 
+
+##  Step 1: Network Connectivity 
+
+Mutual TLS (mTLS) is a security protocol used to establish a trusted, encrypted connection between two systems typically between a server (Aidin) and a partner system such as Epic (client). Unlike standard TLS where only the server is authenticated via an SSL certificate, mTLS requires both the client and the server to present and validate digital certificates.
+
+In most cases, integration engines (e.g. Mirth Connect or Corepoint) are used on both sides of the connection to provide HL7 message transformation, buffering, durability, etc., while insulating the communicating applications.
+
+Ports must be negotiated with the Aidin team.  
+
+Aidin prefers to combine IP allowlisting with mTLS. If possible, please provide Aidin with the stable public IP addresses from which your integration engine will connect. See “Allowlisting” above for current hostnames and IP addresses for Aidin’s integration engines.
+
+Please provide Aidin with the public certificate (.crt) that it should be used to validate your client server. Alternatively, Aidin can validate and trust the first certificate your server presents when connectivity is established via the allowlist.
+
+Once the port, IP, and certificate information has been exchanged and configured in each integration engine, your EHR Interface team should confirm communication with Aidin at the following endpoints:
+
+* Sandbox: https://connect.sandbox.myaidin.com  
+* Production: https://connect.next.myaidin.com
+
+**Step 1:  Add Facilities to the Worksheet**  
+Enter all relevant facility-level data into the accompanying worksheet on tab 1\. For each facility, include the official hospital name, street address, facility code, National Provider Identifier (NPI), and Tax Identification Number (TIN). 
+
+#### **Step 2: Define Patient Population** 
+
+Communicate to the Aidin team what patient populations you intend to include in your ADT feed, such as:
+
+* Inpatient  
+* Outpatient  
+* Emergency Room  
+* Pre-scheduled Surgeries
+
+#### **Step 3: Include Required HL7 Message Types** 
+
+| Message Type | Description |
+| :---- | :---- |
+| A01 – Admit/Visit Notification | Sent when a patient is admitted or begins an outpatient/ER visit. Crucial for census updates and initiating referrals. |
+| A02 – Transfer Patient | Indicates an intra-facility transfer (e.g., room or department change). Ensures current location tracking. |
+| A03 – Discharge Patient | Sent at the point of discharge. This message triggers discharge planning workflows and post-acute referral actions. |
+| A04 – Register a Patient  | Represents initial registration before any clinical activity. Used in walk-in outpatient settings. |
+| A05 – Pre-Admit a Patient | Used for pre-admission scenarios, such as scheduled surgeries. Helps plan downstream referral activities in advance. |
+| A06 – Change Outpatient to Inpatient | Sent when a patient’s status transitions from outpatient to inpatient. Ensures proper encounter tracking. |
+| A07 – Change Inpatient to Outpatient | Indicates that an inpatient was reclassified as outpatient, useful in observation scenarios. |
+| A08 – Update Patient Information | Contains demographic updates (e.g., address, phone). Keeps Aidin records synchronized. |
+| A11 – Cancel Admit | Cancels an earlier A01 message. Ensures Aidin accurately reflects admission status. |
+| A12 – Cancel Transfer | Reverses a previous A02 message. Prevents erroneous location tracking. |
+| A13 – Cancel Discharge | Voids a previously sent A03 discharge message, reactivating the patient’s admission. |
+| A38 – Cancel Pre-Admit | Cancels an earlier A05 message for pre-admissions. |
+
+Aidin can optionally support patient merge messages:
+
+| Message Type | Description |
+| :---- | :---- |
+| A18 \- Merge Patient Information | If both patients exist (in Aidin) we move referrals from the prior patient to the current. If no patient exists, update the prior patient’s MRN. |
+| A40 – Merge Patient \- Patient Identifier List | Same as above. |
+| A47 – Change Patient Identifier List | Same as above. |
+
+#### **Step 4: Specify Time Zones** 
+
+Communicate to the Aidin team which time zone is used for timestamps in the data.
+
+#### **Step 5: Exclude visits from the ADT Feed** 
+
+Exclude visits related if not in scope to:
+
+* Labs  
+* Radiology  
+* Imaging
+
+#### **Step 6: Patient Identifier and merge configuration** 
+
+Communicate to the Aidin team how to uniquely identify a patient in your feed. Aidin strongly prefers to have both the localized MRN as well as an “Enterprise MRN” if available. If you are planning to send merge messages (A18, A40, or A47), please identify which of these patient identifiers you would want Aidin to use.
+
+#### **Step 7: Insurance Coordination of Benefits and Expiration Dates** 
+
+Communicate to the Aidin team how Aidin should interpret primary and secondary insurance details from the IN1 and IN2 HL7 segments. Options:
+
+1. Merge similar insurances but do not overwrite existing data with blank values.  
+2. Merge similar insurances and overwrite existing data.
+
+For Epic Users: Indicate which category should be prioritized for insurance processing: Professional, Hospital, HAR, Visit.
+
+#### **Step 8: Data Fields in the ADT Feed** 
+
+Please ensure the following fields are included in the ADT feed for full Aidin functionality.
+
+Message Header (MSH Segment)
+
+1. Encoding Characters  
+2. Sending Facility  
+3. Date/Time of Message  
+4. Message Type  
+5. Message Control ID
+
+Patient Identification (PID Segment)
+
+1. Patient ID (MRN)  
+2. Patient Name\*  
+3. Date/Time of Birth  
+4. Sex  
+5. Patient Address  
+6. At least one phone number (Home, Business, or Mobile)  
+7. Patient Height (in)  
+8. Patient Weight (lbs)  
+9. Primary Language  
+10. HAR (Hospital Account Record)  
+11. SSN
+
+Visit Information (PV1 Segment)
+
+1. Patient Class  
+2. Assigned Patient Location  
+3. Admission Type  
+4. Preadmit Number  
+5. Attending Doctor  
+6. Referring Doctor  
+7. Admitting Doctor  
+8. Hospital Service  
+9. Patient Type  
+10. Visit Number  
+11. Financial Class  
+12. Discharge Disposition  
+13. Admit Date/Time  
+14. Discharge Date/Time
+
+Insurance Information (IN1 Segment)
+
+1. Insurance Plan ID  
+2. Insurance Company ID  
+3. Insurance Company Name  
+4. Insurance Company Address  
+5. Insurance Contact Person  
+6. Insurance Contact Phone Number  
+7. Group Number  
+8. Group Name  
+9. Insured’s Employer ID  
+10. Insured’s Employer Name  
+11. Plan Effective Date  
+12. Plan Expiration Date  
+13. Authorization Information  
+14. Plan Type  
+15. Name of Insured  
+16. Insured’s Relationship to Patient  
+17. Insured’s Date of Birth  
+18. Insured’s Address  
+19. Policy Number\*  
+20. Coordination of Benefits\*
+
+Next of Kin/Emergency Contact (NK1 Segment)
+
+1. Name  
+2. Relationship  
+3. Address  
+4. Phone Number  
+5. Type of Phone Number
+
+Allergies (AL1 Segment)
+
+1. Allergy Type  
+2. Allergy Code/Description  
+3. Allergy Severity
+
+Diagnosis (DG1 Segment)
+
+1. Diagnosis Codes  
+2. Diagnosis Description
+
+Treatment Team (ROL Segment)
+
+1. CM/SW Team Members
+
+Additional Segments (Optional but Recommended)
+
+1. Procedure Codes (PR1 Segment): Include procedure details.  
+2. CPT Codes: CPT codes for billing.  
+3. EVN Segment (A16 Messages): Discharge Order Date/Time.  
+4. Expected Discharge Date: Recommended for patient tracking.
+
+#### **Step 9: ADT Testing**  
+
+Once your ADT feed has been established in our Sandbox environment, certain test “scenarios” must be triggered in your test environment so that Aidin can determine whether it is receiving the appropriate data for each event. As part of our testing protocol, we will coordinate a call to walk through each scenario in detail from a workflow perspective. An accompanying spreadsheet will be shared, outlining the teams that need to be involved (e.g., Prelude, Clindoc, ) and the specific actions required to trigger each ADT message. During the session, we will review these scenarios to ensure that ADT data is flowing accurately:.
+
+1. Arrive ED trauma patient → Assign bed → Register patient → Admit to inpatient → Perform patient merge.  
+2. Admit as inpatient → Change status to observation → Transfer patient → Cancel transfer → Change status back to inpatient.  
+3. Admit patient → Cancel admission.  
+4. Admit inpatient → Add expected discharge date → Update expected discharge date → Discharge patient → Cancel discharge.  
+5. Admit patient from an existing outpatient encounter.  
+6. Arrive ED patient → Obtain primary and secondary insurance → Admit as inpatient → Change primary insurance information.  
+7. Admit as inpatient with a diagnosis → Update diagnosis post-admission.  
+8. Arrive ED patient → Enter insurance (primary with active expiration date, secondary with expired policy) → Admit as inpatient → Update expiration dates for both primary and secondary insurance.  
+9. Admit inpatient → Patient goes to X-ray/CT → Patient returns to original room.  
+10. Discharge patient from acute care → Admit to owned Rehab/LTCH/SNF (same building or different building).
+
+## 
+
+##  
+

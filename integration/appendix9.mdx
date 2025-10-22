@@ -1,0 +1,83 @@
+---
+title: 'HL7 MDM Configuration'
+description: ''
+---
+
+Aidin sends documents to your EHR and Enterprise Content Management system using the HL7 v2.x MDM^T02 (new) / 08 (update) message types. Both TCP MLLP and HTTPS protocols are supported. 
+
+Each document is tagged using a configurable document ID. By default, Aidin uses REFERRAL-ID-\<id\>-\<type\>-PDF. You will need to route documents to the appropriate section in Epic based on TXA and OBX segment values.  Aidin sends the following types of documents, depending on the modules that are in scope for this integration. Aidin suggests mapping all of these document types. 
+
+| Document Type | Document ID |
+| :---- | :---- |
+| Patient Choice | REFERRAL-ID-\[Aidin Referral ID\]-PATIENT-CHOICE-PDF |
+| Contacted Providers | REFERRAL-ID-\[Aidin Referral ID\]-CONTACTED-PROVIDERS-PDF  |
+| Important Message from Medicare (IMM) | REFERRAL-ID-\[Aidin Referral ID\]-IMM-PDF |
+| Medicare Outpatient Observation Notice (MOON) | REFERRAL-ID-\[Aidin Referral ID\]-MOON-PDF  |
+| Hospital-Issued Notices of Noncoverage (HINNs) | REFERRAL-ID-\[Aidin Referral ID\]-HINN-PDF |
+| Notice of Observation | REFERRAL-ID-\[Aidin Referral ID\]-NOTICEOFOBS-PDF |
+
+#### **HL7 Message Structure** 
+
+All MDM messages follow the standard HL7 format with these segments:
+
+* **MSH** (Message Header) \- Contains routing and control information  
+* **PID** (Patient Identification) \- Patient demographic information  
+* **PV1** (Patient Visit) \- Visit/encounter information  
+* **TXA** (Transcription Document Header) \- Document metadata  
+* **OBX** (Observation/Result) \- Document content
+
+Trigger Events
+
+- **T02** \- Document creation (new document)  
+- **T08** \- Document update/edit (existing document)
+
+Note: The system automatically determines which trigger event to use based on whether a previous message exists for the same document type and referral. This behavior is configurable – some customers prefer that documents are always sent as “new” instead of “updated” to make sure that the message is handled appropriately in Epic. Please let Aidin know which you prefer.
+
+#### **Sample Messages** 
+
+1\. T02 Text Message (Referral Details)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T02|825|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-DETAILS|||||AU||AV
+OBX|1|FT|^details|1|Patient:~John Doe~~MRN:~999888~~Aidin Request ID:~999888~~Level of care reserved:~Transportation~~Partner Reserved:~Manorcare Nursing Home, Alexandria, VA 22039 703-222-2222~~Clinical needs requested:~wound care, physical therapy~~Geography searched:~15 miles around 90210~~Start of Service:~10/12/2020~~Pickup/appointment time:~3:05pm EST on 2/4/2021~~Request sent:~1:10pm EST on 2/2/2021 by Russ Graney~~Partner reserved:~10:10am EST on 2/1/2021 by Russ Graney~~Choice list shared:~10:10am EST on 2/2/2021 by Russ Graney~|||||||||||
+```
+
+2\. T08 Text Message (Referral Details Update)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T08|825|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-DETAILS|||||AU||AV
+OBX|1|FT|^details|1|Patient:~John Doe~~MRN:~999888~~Aidin Request ID:~999888~~Level of care reserved:~Transportation~~Partner Reserved:~Manorcare Nursing Home, Alexandria, VA 22039 703-222-2222~~Clinical needs requested:~wound care, physical therapy~~Geography searched:~15 miles around 90210~~Start of Service:~10/12/2020~~Pickup/appointment time:~3:05pm EST on 2/4/2021~~Request sent:~1:10pm EST on 2/2/2021 by Russ Graney~~Partner reserved:~10:10am EST on 2/1/2021 by Russ Graney~~Choice list shared:~10:10am EST on 2/2/2021 by Russ Graney~|||||||||||
+```
+
+3\. T02 PDF Message (Patient Choice List)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T02|826|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-PATIENT-CHOICE-PDF|||||AU||AV
+OBX|1|ED|^patient_choice_pdf|1|^^PDF^Base64^JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCgoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+CmVuZG9iagoKMyAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDIgMCBSCi9NZWRpYUJveCBbMCAwIDYxMiA3OTJdCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0YxIDQgMCBSCj4+Cj4+Ci9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoK...|||||||||||
+```
+
+#### **Field Descriptions** 
+
+MSH (Message Header) Segment
+
+**Field 1**: Field separator (|)  
+**Field 2**: Encoding characters (^\~\\&)  
+**Field 3**: Sending application (AIDIN)  
+**Field 4**: Sending facility (configurable)  
+**Field 5**: Receiving application (EPIC)  
+**Field 6**: Receiving facility (configurable)  
+**Field 7**: Date/time of message (YYYYMMDDHHMMSS)  
+**Field 9**: Message type (MDM^T02 or MDM^T08)  
+**Field 10**: Message control ID (unique identifier)  
+**Field 11**: Processing ID (T for test, P for production)  
+**Field 12**: Version ID (2.3)
+

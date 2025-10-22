@@ -1,0 +1,606 @@
+---
+title: 'EHR -> Aidin via SFTP'
+description: ''
+---
+
+#### **Step 1: Setup** 
+
+When Aidin receives your documents via SFTP, the ultimate goal is to present these documents to users within the context of a referral for the patient they are working with. In order to do that, there are two key elements that need to be derived from your document:
+
+* Document Title  
+* Patient
+
+##### **Deriving the Document Title** 
+
+The title of the document is used in the file name presented to users and is key to them relating the document back to what they see on-screen in the EHR. The title can be derived in one of two ways:
+
+###### **Using document detection** 
+
+Aidin will pull the first non-numeric line of text from the document to use as the title, ignoring things like “Page 1 or 3” or “MRN: 1234567.” So, you simply need to prominently display the desired document title at the top of the document, and Aidin will use that. In addition, when Aidin detects a patient match (see below), the patient name will also be prefixed to the file name, making it easier for your users to find the files they are looking for.
+
+###### **Using the file name**
+
+For the most control, you can opt-out of document detection and Aidin will instead use the exact name of the file as it has been sent over.
+
+##### **Deriving the Patient** 
+
+Supplying an identifier for your patients will allow Aidin to connect your documents directly to a patient immediately upon receipt, eliminating steps for your users and also preventing potential mistakes. Documents can be matched to patients based on either the patient’s MRN or the patient’s CSN (or encounter number). A patient will only be matched to a document if, and only if, a single patient match is detected based on the given identifier. If there are multiple patients detected, that document will be considered “unassigned,” and users will have an opportunity to search for that document manually.
+
+Like the document title, the patient’s MRN or CSN ban be derived in one of two ways:
+
+##### **Using document detection** 
+
+Place the MRN or CSN of the patient near the top of the document, i.e. “MRN: 1234567” or “CSN: 7654321.” The presence of this line will be enough for Aidin to detect the patient’s identifier and find a match. Note that, to avoid ambiguous matches, only the first 10 lines of the document will be scanned for this information, so be sure that the patient identifier appears toward the very top of the document.
+
+##### **Using file name patterns** 
+
+By placing the keyword “AIDMRN-” or “AIDCSN-” in the name of your file, Aidin can detect this as a pattern to use to precisely pull the MRN or CSN of a patient. For example, a file named `AIDMRN-1234567_unique_file_name.pdf` will automatically be associated with the patient with MRN 1235467\.
+
+To use this, you must:
+
+* Place the keywords “AIDMRN” anywhere in the name of your file name, immediately followed by a dash (`-`), immediately followed by the MRN.  
+* Prefix and suffix the keyword with underscore characters (`_`) if other text is included in the file name.
+
+Valid examples:
+
+* `aidmrn-1234567.pdf`  
+* `<some timestamp>_AIDMRN-1234567_file_suffix.pdf`
+
+Invalid examples:
+
+* `AIDMRN_1234567.pdf` (needs dash)  
+* `AIDMRN-1234567suffix.pdf` (needs underscore)
+
+##### **Deriving the User** 
+
+To streamline workflows and reduce manual steps, Aidin supports automatic user detection from documents based on user-specific identifiers. This ensures that user actions (such as printing or submitting a document) are accurately attributed, improving data integrity and auditability.
+
+Documents can be matched to users based on one of the following:
+
+* The user’s **name**  
+* The user’s **email**  
+* The user’s **medical records user ID**
+
+A user will only be matched to a document if, and only if, a single, unambiguous match is detected based on the supplied identifier. If multiple possible matches are found, the document will not be assigned to any user.
+
+Like the patient identifier, user identification can be derived in two ways:
+
+##### **Using document detection** 
+
+To detect the user from the document content, include a line near the top of the document using the following format:
+
+* Printed by: John Doe  
+* Printed by: [john.doe@example.com](mailto:john.doe@example.com)  
+* Printed by: 1234567
+
+The keyword “Printed by:” must be present, immediately followed by the user’s name, email, or medical record user ID.
+
+To ensure reliable detection, Aidin scans only the first 10 lines of the document. Make sure this information appears near the very top.
+
+##### **Using file name patterns** 
+
+User identifiers can also be embedded directly in the file name using the `AIDUSR-` keyword. This approach is especially useful for automated systems generating documents in bulk.
+
+To use this method:
+
+* Include the keyword **`AIDUSR-`**, followed immediately by the user’s **medical records user ID**.  
+* If the filename includes other content, **prefix and suffix** the keyword block with underscore characters (`_`) to separate it clearly.
+
+Valid examples:
+
+* `AIDUSR-1234567.pdf`    
+* `20240701_093000_AIDUSR-1234567_lab_results.pdf`
+
+Invalid examples:
+
+* `AIDUSR_1234567.pdf` (Uses underscore instead of dash)  
+* `AIDUSR-1234567v1.pdf` (Missing trailing underscore or separator)
+
+#### **Step 2: Testing** 
+
+Testing will occur in our Sandbox environment using documents curated from patients in your Test environment. This will allow for proper end-to-end testing of document receipt, titling and patient assignment.
+
+While the test plan is straightforward, it should be exercised using a representative sample of all of the document types you anticipate sending, to ensure that proper data detection occurs. For each type of document:
+
+* Send a document via SFTP for a patient with a title and MRN configured using your preferred methodology  
+* Allow time for the document to process (usually less than one minute)  
+* Go to the Dashboard and visit or create a referral for that patient  
+* Once on the referral page, ensure you are on the “Details” tab and click the “Add Patient Documents” button  
+* See that the document you printed appears in the list of patient documents
+
+If you do not see the document here, check the “Unassigned documents” section to see if the document has landed there. If the document appears within “Unassigned document,” then it was received, but data was not detected. This may mean the content of the document or file name pattern does not align with the required format. If the document does not appear in the “unassigned documents” section, then the document has not been received by Aidin. This may mean a delivery, configuration, or networking failure has occurred, and logs should be checked to see where the fault occurred.
+
+Once all documents have been received with their appropriate titles and they are being matched to the correct patients, then testing can be considered successful.
+
+#### **Optional Setup: GPG Encryption**
+
+If your configuration requires file encryption, Aidin is able to decrypt files you send us that are encrypted using one of our PGP keys. For your convenience, we support both RSA and ed25519 encryption strategies.
+
+Below are the public keys you’ll need to use to encrypt your files.
+
+##### **PGP keys, TST environment:**
+
+###### **RSA**
+
+```
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQENBGhRcNMBCADUoszw/O2rXCfPkFFac6+HAptZ8f8nIpPuEmaaWAmrn+fJlhHu
+KOwMIzygw8LkWlCjoNH+KyyMEVJZ94zlmXaYKD3QKUf5D6H/+Y7FpTZ82kCCjCh8
+o/Nebp9QjNhqk9JWziC81Ar7lLQx4GAnjBNnohnOQK5H/awtr3jOvyXLn4slzxsa
+DJqov9KjpWO0C4mN6hMmlXjhlopOMT+7cZ4hCj1DjL7hCLmCZej9SgYy3ZTXc40a
+ZfV0zEKVFKlC56lbobjxWJvaYRebozSSEiyeJlL8paJYo9jGNfq8Dm0bgYRwXa8h
+wNbGEMhXn3e6VCdr98Y/WxOuNiFKGeaQHX8/ABEBAAG0JEFpZGluIFJTQSA8c3Vw
+cG9ydCt0ZXN0QG15YWlkaW4uY29tPokBUQQTAQgAOxYhBAXusW0ef4axYhO7bmgA
+KuASLuLcBQJoUXDTAhsDBQsJCAcCAiICBhUKCQgLAgQWAgMBAh4HAheAAAoJEGgA
+KuASLuLc00cIAIpX8CaNZ+HGNBJbZ2F5IcmLUMggH7hotnarGLZwZtXZ1qLr+INj
+f748lKB3kCzI487LuxJktKmNHOWpcnOdKojGfgoywGxsAQzBMule6Cl7zg3X5I0i
+q0sXHaPkYDeMoaotJWMiMkjYFxyEmyckqOXrWRaBv+MK5UxcE+S60cJZN4vGzvFf
+5OMLL0xK9MbYbwoq1umA/wFrsABIemtsv4iH9QbsI27O1aMTWE5+tHZ+SMbd54im
+xNv8Fb+QVOYAKZUpup6vnbDbK5mDXODO7N6Kx0xfRYLmn5nNCmfHFWY+bi2SBXFS
+L3lTebODGF5Of6NKEuIr8hE9pyX23d7I8E65AQ0EaFFw0wEIANcg0DHZgeL1m+9d
+u5g9fMnw+MrE95chM3ss0RUo0cWMVC4EsvQOPMIdiHEnpJzeWQxMJecIVu3w8iHn
+TqbTrfQwPxvFsPBhW2nJl4iMp+2g/hBcDx02O6ttVRFb36Tsrpu4vA/UBuu05jKC
+cpkK6fTcLEQGFn8w/wJs59Pjs5W/4ig3Z5W59GZV1l9IOAVe8xUFWSEBG0sFa3Ws
+Dh+nDEaCMszl8Kd6oAYQldZHUVRM1wtELa6ojJLqmXT7iOs1ymbAg+QccRZ2qixM
+1xRRrDGs7mLfbQ2glR6eAcGusgjFvjS8Ac50JsENuyyiejK5XvZkhnfKFcSzYWDx
+z0jO5/8AEQEAAYkBNgQYAQgAIBYhBAXusW0ef4axYhO7bmgAKuASLuLcBQJoUXDT
+AhsMAAoJEGgAKuASLuLcChgH/0y2PvipLfNX4wyySvE1fULTX3GCQoJaSc6Yni5t
+6++/lipjmcof4ErrVE0p+BgNljhEmRtS+dKeNuXDXlyG7GSfuNpaVYWnLzAeBwvA
+mFEcQBCiQEcN8KvmzxltYLYOE6n652f577RP0psYIO+x/fqf9b7tAdTQTKPpouqH
+l5jyQdUXXD6ARNZ9vVmvoM+CdDbQQvcr98/7Brev/lfA6jOUqO0iKHxiZCwj1EaR
+JyVsFVZMOPSua7LbShsLx7Pjf1Nb14PI4OF7HXpZjfStTutiuOgXQoHQe+OSB5FE
+2PB9+yw+9gBn87+qUhuvsP9SkmMx1Sz0bi2lVLx5wwVFRrc=
+=Cgdi
+-----END PGP PUBLIC KEY BLOCK-----
+```
+
+###### **ed25519**
+
+```
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+mDMEZGQKZxYJKwYBBAHaRw8BAQdAbdzLvfNGzeJLgfhY9LZ40glhaS2K8pGmKsn9
+bUCxy8W0IEFpZGluIDxzdXBwb3J0K3Rlc3RAbXlhaWRpbi5jb20+iJMEExYKADsW
+IQS7FFUjgjFwddqUjW7QOiUip3UP+gUCZGQKZwIbAwULCQgHAgIiAgYVCgkICwIE
+FgIDAQIeBwIXgAAKCRDQOiUip3UP+kn2AP9mxZp/v7R6GSBWBReTT+WIw9cdQ3jr
+oEBwKy2ZNbssbgD6AgwgNphP32+P2kVEjNOH1itWpMm4/+gVqyaltx7gZA24OARk
+ZApnEgorBgEEAZdVAQUBAQdAQld+5K7qTtzKpjiQ7yOIoTSlCGrBnrT2RNJsXLLf
+ni0DAQgHiHgEGBYKACAWIQS7FFUjgjFwddqUjW7QOiUip3UP+gUCZGQKZwIbDAAK
+CRDQOiUip3UP+meXAQC/6CrbIySfmw3l5LFkunW78Wdr3ft8yicY3ioAv/sPkwEA
+6ZfegeCbXnW/cCqy/xiBzZXzNuXGtjQIUEXcLO2vOA8=
+=qM18
+-----END PGP PUBLIC KEY BLOCK-----
+```
+
+##### **PGP keys, PRD environment:**
+
+###### **RSA**
+
+```
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+mQENBGhR4cEBCAC+kzXpQXdUZVrvIdIcTrlR8z9hzXWUR4kav86qZPigRVhCvLVV
+310BevZck+q9O7J9Eg2PbGozf+MkNUttGYqFJvwicXJPQ5rMCSF/YhBxoNoxtfpM
+Z+Hegxu9CoK6LvmDOl3IvR/rIsG9Pa0/jHOqBiAtrrTvW1Z9Ti2Lbt9i9lsTV0K+
+9IQKzcL+FbcVrHtDyNWwDmxkpiG0oMn+4qyYRWTAcHzWpqyQFKmVVTRHnIYs+PXZ
+mNaKdvTeaCXHnt01piJrK0xovDQInMwUHw4clebgjy8qh2HuOgOatEHUhrXP0uAA
+mft71CjeREkGa1wBxL2i0ehF6GHU69JOjh37ABEBAAG0H0FpZGluIFJTQSA8c3Vw
+cG9ydEBteWFpZGluLmNvbT6JAVEEEwEIADsWIQRnB4KAiVMYmTEoz4j+/NqB85fI
+sQUCaFHhwQIbAwULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRD+/NqB85fI
+sfXWB/4jYoLmz1OF2+KQDO1NnQS9w6u1Fd3w1rXjgZ/kR4PMoKr+Ir5T5kvJ5i0q
+2dE/qllH+dyp4b6CViIzHHeKlF9rGma1gp4I7hKRuZWKKeWo/NYSmhOJKSbMto77
+cWrMkbc/QEAKRuyX0PZp9iYFdfQot/oES37ch28XeZWd3JCsCf9wMm64pmMWxH23
+0ql+lTesdX6gQ0fwauW9bOC+ZhC4xYPsdQwOojpJYFI0nXkYgLo0dKgeDXLvyyWb
+t/um/VM+iY+7VgqxUVrizBerxvrPhIc1prb2bAJjv201OanJ7DPHWej7ZE77FTOf
+FrV38c8nuarecBfLU543c7fHszaQuQENBGhR4cEBCACsWZOVUwx61+1tJtR/jVPx
+1gr7NoIF6M+PstfXYact3ZAkR2xkipf4gzl/jrog1B7P3JYcpknJKPqhS5usfP9u
+dtApCPvSbjdvxl2MxFdj72hnQwBzfXAJS8cEh1BzKh6BRf9iJ+tGcu3IQq2QrrhT
+3HWxCnjpfNQA7uq334P1/6Mk4VN0ROS4QwsBigvypbdnC43tRkvz7QFI4osAYIMz
+4A17XGIyLqw47ElMaJeGAD+loLEHj1ozAlXIW4hArIEePv0vdf4JVOoTN2egts2t
+2J1HSoqEv+jbbAlI2ZXOcHUw+Zi5i3rk9pm4XORd4ByY0EUfkCR03d4XHxdnq20R
+ABEBAAGJATYEGAEIACAWIQRnB4KAiVMYmTEoz4j+/NqB85fIsQUCaFHhwQIbDAAK
+CRD+/NqB85fIsScUB/49yOX8mc8Ar+G5ygZeCqnK4h+mgJHnCeTJXUcllwwpUJPg
+/XbCswIQ/Kwnaypy+GTTaZy8yjoHno3dbGL8FkVPPhuyhOJN5OmVqbVBnQrinOis
+uVEj0WFvJtOjixMSUrwj2QjA6YE50kBFI25Kn8sTYfZOKbOjGicwlW5/LiU9jiLB
+LXwTJxQPAnUkdgrijJoqLgUZCeWgY0AYV8z6SyvwMlbW0zJp+GPjsShFCz13RpT/
+/2mae5S4GGzcbMhQc8z+eA5y24BUTNTOa/Zj1zQHXXwmB+JONx584+9eE533/Nn0
+u8Utz8QfCE9yIGQPqfJPuj8yAnJuLjtBmIavtI4U
+=kEWl
+-----END PGP PUBLIC KEY BLOCK-----
+```
+
+###### **ed25519**
+
+```
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+mDMEZGLV+RYJKwYBBAHaRw8BAQdA3xBUtHoqCpz92BzMgXNLAeVNnGHfP9YDBd3X
+TJOzQW+0G0FpZGluIDxzdXBwb3J0QG15YWlkaW4uY29tPoiTBBMWCgA7FiEEmu3p
+EV4oZpbtzPLLFaBIDYIiczcFAmRi1fkCGwMFCwkIBwICIgIGFQoJCAsCBBYCAwEC
+HgcCF4AACgkQFaBIDYIiczdkkgEAnpNJNXc7UUvWvJkQQ/7lmdnX82xZ4Bmdtf+e
+dR112zcBAO8KPG5p5DXIcEoZmOjuTqI6117G9JKzjxAFszJXUyQOuDgEZGLV+RIK
+KwYBBAGXVQEFAQEHQATEVYQoi0NW+Yb49QjchaT7OA1jgVIb24g6+cMeUckPAwEI
+B4h4BBgWCgAgFiEEmu3pEV4oZpbtzPLLFaBIDYIiczcFAmRi1fkCGwwACgkQFaBI
+DYIiczdcvAEA4jWCIxdEcUPyDFDgxuY97L1LN+X2lgtQYodslG//+k4BAKA5OSjp
+zBwpvFi9URpvfe9aO3nSwkefjlzP8xijxLEH
+=FC9W
+-----END PGP PUBLIC KEY BLOCK-----
+```
+
+## 
+
+#### **Optional Setup: Print to Fax Delivery** 
+
+Once your SFTP integration has been set up, you can optionally request to have a fax number provisioned that can send documents into Aidin via that integration. This is typically only necessary when an Epic integration is required; otherwise, users can fax documents into Aidin directly from any referral.
+
+Reach out to your Aidin representative if you need this service enabled to have a fax line provisioned.
+
+## 
+
+## Appendix 5: IPP Printer Without Installed Driver Application 
+
+The Aidin application allows any user whose organization has IPP printing enabled to set up a printer on their own machine.  Aidin does not expect end users to go through this workflow. Your team must advise on how to automate this process with whichever endpoint management suite is in use at your organization. The first step is verifying that manual printing can be accomplished. 
+
+#### **Step 1: Create Printer Credentials** 
+
+Log in to Aidin. Navigate to Settings → Aidin Integrations, open the Settings menu, click "Aidin Integrations."  
+
+This link will open the Aidin Printer management page, displaying printer credentials associated with your user account. Printer credentials are stored in a secure unrecoverable format so there is no way to retrieve a printer password after creation. 
+
+IPP printers can be disabled and new credentials created by clicking “Add New Printer Credentials.” This will automatically provision and create a printer with a user name and password. 
+
+#### **Step 2: Conduct a Test Print** 
+
+On a Windows machine, open Printer and Scanners in Windows Settings, click Add a Printer, “The printer that I want wasn’t listed.” then “Add manually.”
+
+Copy the Virtual Printer URL obtained from Aidin from the Aidin Integrations page.
+
+Choose “Select a shared printer by name” then paste the url. Select Microsoft PS Class Driver (or another compatible PostScript driver).   
+Click “OK” to save the printer. A successful install should be confirmed on the next screen.  Click “Next” to finalize the installation. The newly-installed printer should now appear in the list of devices. Click the Aidin printer “Printer properties” option, then locate the Ports tab. Click “Configure port”, then under Security options, enter the credentials you copied from the Aidin printer credential that you created in Step 1\.
+
+At this point, you should be able to print a test document to Aidin. See “Finding Printed Documents” in the onboarding and training materials for more information about how this workflow works in the application.
+
+#### **Step 3: Identify how you will roll out these changes across your user base** 
+
+Aidin expects your staff to roll out printer configurations as needed using your endpoint management suite.  These processes are generally custom to the install environment; as  
+such, this guide is limited on prescribing an official implementation path.
+
+The Windows `printui` utility may be useful on WIndows 10 and above:
+
+Sandbox
+
+```shell
+printui /b "Aidin Printer" /x /n "Aidin Printer" /if /f%windir%\inf\ntprint.inf /r
+"https://printer.sandbox.myaidin.com:631/" /m "Microsoft PS Class Driver"
+```
+
+Production
+
+```shell
+printui /b "Aidin Printer" /x /n "Aidin Printer" /if /f%windir%\inf\ntprint.inf /r "https://printer.next.myaidin.com:631/" /m "Microsoft PS Class Driver"
+```
+
+Aidin supports programmatically created user credentials based on a shared secret and user’s email address using HMAC (Hash-based Message Authentication Code) with SHA-256. Once you have identified how you will install user-level printer credentials on each machine, Aidin will provide a shared secret and you’ll need to compute a password using the following pseudo-code (and example PowerShell) code:
+
+```shell
+param(
+    [string]$Email = "user@example.com",
+    [string]$SharedSecret = "supersecret"
+)
+
+function Compute-DeterministicPassword {
+    param (
+        [string]$Email,
+        [string]$SharedSecret
+    )
+
+    # Normalize the email: lowercase and trim whitespace
+    $normalizedEmail = $Email.ToLower().Trim()
+
+    $hmac = New-Object System.Security.Cryptography.HMACSHA256
+    $hmac.Key = [Text.Encoding]::UTF8.GetBytes($SharedSecret)
+    $emailBytes = [Text.Encoding]::UTF8.GetBytes($normalizedEmail)
+
+    $hashBytes = $hmac.ComputeHash($emailBytes)
+    $base64Password = [Convert]::ToBase64String($hashBytes)
+
+    # Trim padding and restrict to 16 characters
+    $safePassword = $base64Password.TrimEnd('=').Substring(0, 16)
+
+    return $safePassword
+}
+
+$password = Compute-DeterministicPassword -Email $Email -SharedSecret $SharedSecret
+Write-Output "Generated password: $password"
+```
+
+## 
+
+## Appendix 6: “Print to Aidin” installed driver 
+
+Aidin offers a Windows print driver solution that can be installed on end user workstations to allow the user to authenticate to Aidin, print documents to Aidin, and manually associate the documents with a patient.
+
+*While still supported, this is considered a legacy workflow, as it requires the driver to be installed and kept up-to-date on each Windows endpoint device, can be complicated to manage in thin client environments, and is not compatible with non-Windows devices. IPP printing is the preferred printing option for individually-issued devices, and SFTP and FHIR document retrieval are preferred for zero-friction document exchange without needing to print anything from the endpoint device at all. All other workflows automate the step of associating the document with the patient based on MRN, CSN, etc. matching ADT data.*
+
+#### **Installation** 
+
+The driver is delivered with an MSI installer tested on current Microsoft-supported versions of Windows 10 and 11\. Various MSI switches and a custom .INI file can be tuned to support unusual configurations, but the currently recommended installation for the latest Windows 10 and 11 platforms is:
+
+```shell
+msiexec /i Setup.msi USE_UPDATER=0 INSTALL_GHOSTSCRIPT=0 CLEAN_CONFIG=1 ADDLOCAL=MainFeature
+```
+
+This performs a minimal clean install of the driver’s main feature only and disables the internal updater in favor of the enterprise’s own device management. Login will be done via SAML SSO with the enterprise’s IdP.
+
+#### **Testing** 
+
+First open File Explorer on your computer. Use the search bar at the top-right corner to look for the "Print To Aidin" folder, or navigate directly to its known location if you have it bookmarked or memorized. Once you've located the folder, open it and look for a file named configuration.ini. Depending on your folder view settings, this file may appear as “Configuration”.
+
+Next, right-click on the configuration.ini file and choose “Open with” → “Notepad.” To ensure you can make and save edits, it's important to open Notepad as an administrator. You can do this by searching for Notepad in your Start menu, right-clicking it, and selecting “Run as administrator.” Once Notepad is open, use the File menu to open the configuration.ini file from within Notepad.
+
+Inside the file, look for the section labeled: “The base address URL for API requests.”  
+Update the value in that section to the following  address: [open.sandbox.myaidin.com](http://open.sandbox.myaidin.com)
+
+After making this change, be sure to save the file. If the printer was installed without SSO, you’ll need to reach out to Aidin’s Configuration Manager to obtain login credentials for the test printer. if the printer was installed with SSO capabilities, you should now be able to print a test document directly to Aidin. For guidance on accessing the printed document within the application, refer to the “Finding Printed Documents” section in the onboarding and training materials.
+
+**Note**: To ensure printer functionality in the live environment, the base URL must be updated to **https://open.myaidin.com** in the production configuration file.
+
+## Appendix 7: FHIR Integration Setup (also known as Epic App Orchard Handshake)
+
+FHIR interoperability makes possible several of the integrations described in this document, including:
+
+* After Visit Summary (AVS)  
+* Progress Note delivery  
+* Document retrieval via FHIR
+
+#### **Step 1: Request access to “Aidin – Case Management Home Base”[^2] in the Epic Showroom.**
+
+After requesting access, please select the appropriate testing environment from among the options your health system makes available. This process will need to be repeated for the production environment.
+
+#### **Step 2: Background User** 
+
+Your team will need to create a background user for Aidin and then supply the following information back to Aidin to allow our systems to authenticate and interface with your Epic system. 
+
+| Component | Description |
+| :---- | :---- |
+| FHIR Server Hostname | Base URL for the FHIR API, e.g.”fhir.orgname.org" |
+| FHIR Endpoint Path | Endpoint to target, typically /fhir/api/FHIR |
+| FHIR Version  | Supported versions include STU3, R4, etc. Confirm with EMR configuration. |
+| OAuth2 Token Endpoint  | Path to retrieve access tokens, e.g., /fhir/Oauth2/token  |
+| Authorization Type  | Typically client\_credentials grant with client ID/secret  |
+| Identifiers for Lookup  | MRN and CSN values, usually formatted like ‘Client MRN’  |
+
+Aidin needs the following OAuth2 scopes granted, depending on which integrations you would like to enable:
+
+| Scope | Version | Required for |
+| :---- | :---- | :---- |
+| Patient.Search | STU3/R4 | AVS, Progress Notes, Document Retrieval |
+| Encounter.Search  | STU3/R4 | AVS, Progress Notes, Document Retrieval |
+| DocumentReference.Create | STU3/R4 | AVS, Progress Notes |
+| DocumentReference.Search | STU3/R4 | Document Retrieval |
+| DocumentReference.Read | STU3/R4 | Document Retrieval |
+| Binary.Search | STU3/R4 | Document Retrieval |
+| Binary.Read | STU3/R4 | Document Retrieval |
+
+## 
+
+## Appendix 8: Sample FHIR DocumentReference.Create Payloads 
+
+Both After Visit Summary and Progress Notes updates are delivered from Aidin to Epic using the DocumentReference.Create FHIR endpoint. Please make sure that your FHIR integration is already set up and tested according to the steps in Appendix 4 before continuing.
+
+#### **Sample progress note headers** 
+
+```
+POST /interconnect-amcurprd-oauth/api/FHIR/STU3/DocumentReference HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Epic-Client-Id: dbfb3da9-9117-4502-b9a2-37421fab1a57
+Accept-Encoding: gzip;q=1.0,deflate;q=0.6,identity;q= 0.3
+User-Agent: Ruby
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1cm46ZXBpYzphcHBvcmNoYXJkLmN1cnByb2QiLCJjbGllbnRfaWQiOiJkYmZiM2RhOS05MTE3LTQ1MDItYjlhMi0zNzQyMWZhYjFhNTciLCJlcGljLmVjaSI6InVybjplcGljOkN1cnJlbnQtQXBwLU9yY2h hcmQtUHJvZHVjdGlvbiIsImVwaWMubWV0YWRhdGEiOiJCMFZvWndxTElyOVhjMEkyckpYSE5UTm1mRXZWSmFtVDdNdkZuUGlMdkpqQm9LTFdwOHBva0ZBOW5DcWF5WFpka3VuWkRpNU90TENSRmgxUi1vcWNrMWNPUDJyNkJHNG02Ml80dU03c2ZWaDk2MEJBZDJhZzRpTjZJT2YxR05hNyIsImVwaWMudG9rZW50eXBlIjoiYWNjZXNzIiwi ZXhwIjoxNzUwODY5NzY2LCJpYXQiOjE3NTA4NjYxNjYsImlzcyI6InVybjplcGljOmFwcG9yY2hhcmQuY3VycHJvZCIsImp0aSI6IjExMTgwYzY5LWIzZWUtNDk0ZS1iNzMwLWU1ODdjMjQyNTM2NiIsIm5iZiI6MTc1MDg2NjE2Niwic3ViIjoiZWJHZWV1UHhhMno0MDM5QzVmVFV1OEEzIn0.jLRzIUC8LP05bRD5j1BrjL9lj_07_kKOP o0uoxyLKroXFwlWiw9OsvsKAnThlOKQeKjFqigUWspMl3Al7sO8AJZuytoZlEB8xy-C66_SWfg4rW6U9xHijJ7HmF6sjuetoKB5I7OrM5odQL9X5aJI12EHiIeqePQx74UN6IJgCVZIjB-E49R0C-3FPe1_PTVO6Zeu5y6CS3MEh68M9SD2wdiFRmB3SRcZ4IToDOzEtdt-dK7z-rxJKtKrAR8vzRO6-u117eMMRiQSw2K5dFG-RPDqUjM3pX y1Pw9kC9mcQtlXcLYzDrRYJYVXRrpubiSl70A4PCnj_LXFoBSM0m1NxA
+Host: vendorservices.epic.com
+Content-Length: 1029
+```
+
+#### **Sample progress note payload body**
+
+```json
+{
+  "content": [
+    {
+      "attachment": {
+        "contentType": "text/plain",
+        "data": "UGF0aWVudDoKSm9obiBEb2UKCk1STjoKOTk5ODg4CgpBaWRpbiBSZXF1ZXN0\nIElEOgo5OTk4ODgKCkxldmVsIG9mIGNhcmUgcmVzZXJ2ZWQ6ClRyYW5zcG9y\ndGF0aW9uCgpQYXJ0bmVyIFJlc2VydmVkOgpNYW5vcmNhcmUgTnVyc2luZyBI\nb21lLCBBbGV4YW5kcmlhLCBWQSAyMjAzOSA3MDMtMjIyLTIyMj
+IKCkNsaW5p\nY2FsIG5lZWRzIHJlcXVlc3RlZDoKd291bmQgY2FyZSwgcGh5c2ljYWwgdGhl\ncmFweQoKR2VvZ3JhcGh5IHNlYXJjaGVkOgoxNSBtaWxlcyBhcm91bmQgOTAy\nMTAKClN0YXJ0IG9mIFNlcnZpY2U6CjEwLzEyLzIwMjAKClBpY2t1cC9hcHBv\naW50bWVudCB0aW1lOgozOjA1cG0gRVNUIG9uIDIvNC8yMDIxCgpSZXF
+1ZXN0\nIHNlbnQ6CjE6MTBwbSBFU1Qgb24gMi8yLzIwMjEgYnkgUnVzcyBHcmFuZXkK\nClBhcnRuZXIgcmVzZXJ2ZWQ6CjEwOjEwYW0gRVNUIG9uIDIvMS8yMDIxIGJ5\nIFJ1c3MgR3JhbmV5CgpDaG9pY2UgbGlzdCBzaGFyZWQ6CjEwOjEwYW0gRVNU\nIG9uIDIvMi8yMDIxIGJ5IFJ1c3MgR3JhbmV5Cg==\n"
+      }
+    }
+  ],
+  "context": {
+    "encounter": {
+      "reference": "eYWExOnM9wfSn4pRqourt6Q3"
+    }
+  },
+  "docStatus": "final",
+  "resourceType": "DocumentReference",
+  "subject": {
+    "reference": "enh2Q1c0oNRtWzXArnG4tKw3"
+  },
+  "type": {
+    "coding": [
+      {
+        "code": "11506-3",
+        "system": "http://loinc.org"
+      }
+    ]
+  }
+}
+
+```
+
+In the example payload above, LOINC code [11506-3](https://loinc.org/11506-3/) is a progress note.  If you would like us to send AVS payloads, we will need you to provide the specific code and system values for your installation, which may look something like the following:
+
+```json
+ "type": {
+    "coding": [
+      {
+        "code": "304100010",
+        "system": "urn:oid:1.2.840.114350.1.13.361.2.7.4.737880.5010"
+      }
+    ]
+  }
+```
+
+#### **Testing (Progress Note)**
+
+Log into Aidin and begin by creating a new referral for the patient. Then, navigate to the Provider Search tab and enter the required search criteria, before clicking "Save and Search." Once the list of providers populates, click the green button to send the referral to the selected providers. You will then be prompted to set a start of service date and a deadline; once these fields are completed, click "Send to Provider." 
+
+Click on "Manage" in the top-right corner of the Patient Details tab and select "Send to Medical Records." From the list, check "Referral Details," then click "Confirm."  
+
+To verify that the note  was successfully sent, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. To verify the successful transmission of the note, navigate back to EPIC and confirm that the Progress Note (Referral Details) appears in the Progress Notes section of the patient’s chart.
+
+#### **Testing (AVS Note)** 
+
+On the Overview tab, navigate to the “0 of 6 Providers Available” section and click the ellipsis (...) under “Manage” then click “Reserve Provider” to reserve a provider for the referral.
+
+Click on "Manage" in the top-right corner of the Patient Details tab and select "Send to Medical Records." From the list, check "AVS details," then click "Confirm." Please note that the AVS details will remain unchecked until a provider is reserved on the referral.  
+
+To verify that the note  was successfully sent, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. Then, navigate back  to Epic and confirm that the AVS details appear in the AVS print-group section of the patient’s chart.
+
+## Appendix 9: HL7 MDM Configuration 
+
+Aidin sends documents to your EHR and Enterprise Content Management system using the HL7 v2.x MDM^T02 (new) / 08 (update) message types. Both TCP MLLP and HTTPS protocols are supported. 
+
+Each document is tagged using a configurable document ID. By default, Aidin uses REFERRAL-ID-\<id\>-\<type\>-PDF. You will need to route documents to the appropriate section in Epic based on TXA and OBX segment values.  Aidin sends the following types of documents, depending on the modules that are in scope for this integration. Aidin suggests mapping all of these document types. 
+
+| Document Type | Document ID |
+| :---- | :---- |
+| Patient Choice | REFERRAL-ID-\[Aidin Referral ID\]-PATIENT-CHOICE-PDF |
+| Contacted Providers | REFERRAL-ID-\[Aidin Referral ID\]-CONTACTED-PROVIDERS-PDF  |
+| Important Message from Medicare (IMM) | REFERRAL-ID-\[Aidin Referral ID\]-IMM-PDF |
+| Medicare Outpatient Observation Notice (MOON) | REFERRAL-ID-\[Aidin Referral ID\]-MOON-PDF  |
+| Hospital-Issued Notices of Noncoverage (HINNs) | REFERRAL-ID-\[Aidin Referral ID\]-HINN-PDF |
+| Notice of Observation | REFERRAL-ID-\[Aidin Referral ID\]-NOTICEOFOBS-PDF |
+
+#### **HL7 Message Structure** 
+
+All MDM messages follow the standard HL7 format with these segments:
+
+* **MSH** (Message Header) \- Contains routing and control information  
+* **PID** (Patient Identification) \- Patient demographic information  
+* **PV1** (Patient Visit) \- Visit/encounter information  
+* **TXA** (Transcription Document Header) \- Document metadata  
+* **OBX** (Observation/Result) \- Document content
+
+Trigger Events
+
+- **T02** \- Document creation (new document)  
+- **T08** \- Document update/edit (existing document)
+
+Note: The system automatically determines which trigger event to use based on whether a previous message exists for the same document type and referral. This behavior is configurable – some customers prefer that documents are always sent as “new” instead of “updated” to make sure that the message is handled appropriately in Epic. Please let Aidin know which you prefer.
+
+#### **Sample Messages** 
+
+1\. T02 Text Message (Referral Details)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T02|825|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-DETAILS|||||AU||AV
+OBX|1|FT|^details|1|Patient:~John Doe~~MRN:~999888~~Aidin Request ID:~999888~~Level of care reserved:~Transportation~~Partner Reserved:~Manorcare Nursing Home, Alexandria, VA 22039 703-222-2222~~Clinical needs requested:~wound care, physical therapy~~Geography searched:~15 miles around 90210~~Start of Service:~10/12/2020~~Pickup/appointment time:~3:05pm EST on 2/4/2021~~Request sent:~1:10pm EST on 2/2/2021 by Russ Graney~~Partner reserved:~10:10am EST on 2/1/2021 by Russ Graney~~Choice list shared:~10:10am EST on 2/2/2021 by Russ Graney~|||||||||||
+```
+
+2\. T08 Text Message (Referral Details Update)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T08|825|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-DETAILS|||||AU||AV
+OBX|1|FT|^details|1|Patient:~John Doe~~MRN:~999888~~Aidin Request ID:~999888~~Level of care reserved:~Transportation~~Partner Reserved:~Manorcare Nursing Home, Alexandria, VA 22039 703-222-2222~~Clinical needs requested:~wound care, physical therapy~~Geography searched:~15 miles around 90210~~Start of Service:~10/12/2020~~Pickup/appointment time:~3:05pm EST on 2/4/2021~~Request sent:~1:10pm EST on 2/2/2021 by Russ Graney~~Partner reserved:~10:10am EST on 2/1/2021 by Russ Graney~~Choice list shared:~10:10am EST on 2/2/2021 by Russ Graney~|||||||||||
+```
+
+3\. T02 PDF Message (Patient Choice List)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T02|826|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-PATIENT-CHOICE-PDF|||||AU||AV
+OBX|1|ED|^patient_choice_pdf|1|^^PDF^Base64^JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCgoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+CmVuZG9iagoKMyAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDIgMCBSCi9NZWRpYUJveCBbMCAwIDYxMiA3OTJdCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0YxIDQgMCBSCj4+Cj4+Ci9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoK...|||||||||||
+```
+
+#### **Field Descriptions** 
+
+MSH (Message Header) Segment
+
+* **Field 1**: Field separator (|)  
+* **Field 2**: Encoding characters (^\~\\&)  
+* **Field 3**: Sending application (AIDIN)  
+* **Field 4**: Sending facility (configurable)  
+* **Field 5**: Receiving application (EPIC)  
+* **Field 6**: Receiving facility (configurable)  
+* **Field 7**: Date/time of message (YYYYMMDDHHMMSS)  
+* **Field 9**: Message type (MDM^T02 or MDM^T08)  
+* **Field 10**: Message control ID (unique identifier)  
+* **Field 11**: Processing ID (T for test, P for production)  
+* **Field 12**: Version ID (2.3)
+
+PID (Patient Identification) Segment
+
+* **Field 3**: Patient ID list (MRN with identifier type)  
+* **Field 5**: Patient name (Last^First^Middle)  
+* **Field 7**: Date of birth (YYYYMMDD)  
+* **Field 8**: Administrative sex (M/F)
+
+PV1 (Patient Visit) Segment
+
+* **Field 1**: Set ID (1)  
+* **Field 19**: Visit number (CSN \- Contact Serial Number)
+
+TXA (Transcription Document Header) Segment
+
+* **Field 2**: Document type (PN for progress note, or configurable)  
+* **Field 4**: Activity date/time  
+* **Field 5**: Primary activity provider (facility code^last^first^^^^^role)  
+* **Field 12**: Unique document number (format: ^^REFERRAL-ID-{id}-{document-type})  
+* **Field 17**: Document completion status (AU \- authenticated)  
+* **Field 19**: Document availability status (AV \- available)
+
+OBX (Observation/Result) Segment
+
+* **Field 1**: Set ID (1)  
+* **Field 2**: Value type (FT for formatted text, ED for encapsulated data)  
+* **Field 3**: Observation identifier (document name)  
+* **Field 4**: Sub-ID (1)  
+* **Field 5**: Observation value (text content or Base64 encoded PDF)
+
+Text Documents (FT Value Type)
+
+* Used for referral details when configured as text  
+* Content is formatted text with \~ as line separators  
+* Directly readable in the OBX-5 field
+
+PDF Documents (ED Value Type)
+
+* Used for generated PDFs (patient choice lists, contacted providers, forms)  
+* Content is Base64 encoded in OBX-5 field  
+* Format: ^^PDF^Base64^{base64-encoded-content}  
+* May include patient banner stamps with demographic information
+
+#### **Testing** 
+
+Users will need access to the Epic test environment (e.g EPIC TST, SUPT etc)
+
+Once logged into Aidin, locate a test patient within Aidin that was originally created in the Epic test environment and proceed to create a referral for that patient. Within the Patient Details tab, click on "Generate a Form".
+
+Identify the document that is intended to be sent to EPIC, then click "Fill Out Form." After completing the form, attach a signature and select "Attach Document." Next, click on "Manage" in the upper-right corner of the Patient Details tab and choose "Send to Medical Records." Check the box for the document you just attached and then select "Confirm" to send it.
+
+To verify that the document was successfully transmitted, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. This will confirm whether the document has been sent. Then, open Epic, access the patient’s chart, and go to the Media tab—here, you should find the document that was sent from Aidin now available in the patient’s record.
+
+The Patient Choice List option appears after a referral is created, a provider search has been conducted, and the referral deadline has passed. The user must also click  "Print the Patient Choice List" for it to be fully enabled. 
+
+The Contacted Providers List becomes accessible once providers are searched and both a start of service date and deadline have been set
+
+[^1]:  Allowing domains is preferable to allowing IP addresses from a disaster recovery perspective.
+
+[^2]:  Name subject to change.

@@ -1,0 +1,264 @@
+---
+title: 'FHIR Integration Setup'
+description: 'Also known as Epic App Orchard Handshake'
+---
+
+FHIR interoperability makes possible several of the integrations described in this document, including:
+
+* After Visit Summary (AVS)  
+* Progress Note delivery  
+* Document retrieval via FHIR
+
+#### **Step 1: Request access to “Aidin – Case Management Home Base”[^2] in the Epic Showroom.**
+
+After requesting access, please select the appropriate testing environment from among the options your health system makes available. This process will need to be repeated for the production environment.
+
+#### **Step 2: Background User** 
+
+Your team will need to create a background user for Aidin and then supply the following information back to Aidin to allow our systems to authenticate and interface with your Epic system. 
+
+| Component | Description |
+| :---- | :---- |
+| FHIR Server Hostname | Base URL for the FHIR API, e.g.”fhir.orgname.org" |
+| FHIR Endpoint Path | Endpoint to target, typically /fhir/api/FHIR |
+| FHIR Version  | Supported versions include STU3, R4, etc. Confirm with EMR configuration. |
+| OAuth2 Token Endpoint  | Path to retrieve access tokens, e.g., /fhir/Oauth2/token  |
+| Authorization Type  | Typically client\_credentials grant with client ID/secret  |
+| Identifiers for Lookup  | MRN and CSN values, usually formatted like ‘Client MRN’  |
+
+Aidin needs the following OAuth2 scopes granted, depending on which integrations you would like to enable:
+
+| Scope | Version | Required for |
+| :---- | :---- | :---- |
+| Patient.Search | STU3/R4 | AVS, Progress Notes, Document Retrieval |
+| Encounter.Search  | STU3/R4 | AVS, Progress Notes, Document Retrieval |
+| DocumentReference.Create | STU3/R4 | AVS, Progress Notes |
+| DocumentReference.Search | STU3/R4 | Document Retrieval |
+| DocumentReference.Read | STU3/R4 | Document Retrieval |
+| Binary.Search | STU3/R4 | Document Retrieval |
+| Binary.Read | STU3/R4 | Document Retrieval |
+
+## 
+
+## Appendix 8: Sample FHIR DocumentReference.Create Payloads 
+
+Both After Visit Summary and Progress Notes updates are delivered from Aidin to Epic using the DocumentReference.Create FHIR endpoint. Please make sure that your FHIR integration is already set up and tested according to the steps in Appendix 4 before continuing.
+
+#### **Sample progress note headers** 
+
+```
+POST /interconnect-amcurprd-oauth/api/FHIR/STU3/DocumentReference HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Epic-Client-Id: dbfb3da9-9117-4502-b9a2-37421fab1a57
+Accept-Encoding: gzip;q=1.0,deflate;q=0.6,identity;q= 0.3
+User-Agent: Ruby
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1cm46ZXBpYzphcHBvcmNoYXJkLmN1cnByb2QiLCJjbGllbnRfaWQiOiJkYmZiM2RhOS05MTE3LTQ1MDItYjlhMi0zNzQyMWZhYjFhNTciLCJlcGljLmVjaSI6InVybjplcGljOkN1cnJlbnQtQXBwLU9yY2h hcmQtUHJvZHVjdGlvbiIsImVwaWMubWV0YWRhdGEiOiJCMFZvWndxTElyOVhjMEkyckpYSE5UTm1mRXZWSmFtVDdNdkZuUGlMdkpqQm9LTFdwOHBva0ZBOW5DcWF5WFpka3VuWkRpNU90TENSRmgxUi1vcWNrMWNPUDJyNkJHNG02Ml80dU03c2ZWaDk2MEJBZDJhZzRpTjZJT2YxR05hNyIsImVwaWMudG9rZW50eXBlIjoiYWNjZXNzIiwi ZXhwIjoxNzUwODY5NzY2LCJpYXQiOjE3NTA4NjYxNjYsImlzcyI6InVybjplcGljOmFwcG9yY2hhcmQuY3VycHJvZCIsImp0aSI6IjExMTgwYzY5LWIzZWUtNDk0ZS1iNzMwLWU1ODdjMjQyNTM2NiIsIm5iZiI6MTc1MDg2NjE2Niwic3ViIjoiZWJHZWV1UHhhMno0MDM5QzVmVFV1OEEzIn0.jLRzIUC8LP05bRD5j1BrjL9lj_07_kKOP o0uoxyLKroXFwlWiw9OsvsKAnThlOKQeKjFqigUWspMl3Al7sO8AJZuytoZlEB8xy-C66_SWfg4rW6U9xHijJ7HmF6sjuetoKB5I7OrM5odQL9X5aJI12EHiIeqePQx74UN6IJgCVZIjB-E49R0C-3FPe1_PTVO6Zeu5y6CS3MEh68M9SD2wdiFRmB3SRcZ4IToDOzEtdt-dK7z-rxJKtKrAR8vzRO6-u117eMMRiQSw2K5dFG-RPDqUjM3pX y1Pw9kC9mcQtlXcLYzDrRYJYVXRrpubiSl70A4PCnj_LXFoBSM0m1NxA
+Host: vendorservices.epic.com
+Content-Length: 1029
+```
+
+#### **Sample progress note payload body**
+
+```json
+{
+  "content": [
+    {
+      "attachment": {
+        "contentType": "text/plain",
+        "data": "UGF0aWVudDoKSm9obiBEb2UKCk1STjoKOTk5ODg4CgpBaWRpbiBSZXF1ZXN0\nIElEOgo5OTk4ODgKCkxldmVsIG9mIGNhcmUgcmVzZXJ2ZWQ6ClRyYW5zcG9y\ndGF0aW9uCgpQYXJ0bmVyIFJlc2VydmVkOgpNYW5vcmNhcmUgTnVyc2luZyBI\nb21lLCBBbGV4YW5kcmlhLCBWQSAyMjAzOSA3MDMtMjIyLTIyMj
+IKCkNsaW5p\nY2FsIG5lZWRzIHJlcXVlc3RlZDoKd291bmQgY2FyZSwgcGh5c2ljYWwgdGhl\ncmFweQoKR2VvZ3JhcGh5IHNlYXJjaGVkOgoxNSBtaWxlcyBhcm91bmQgOTAy\nMTAKClN0YXJ0IG9mIFNlcnZpY2U6CjEwLzEyLzIwMjAKClBpY2t1cC9hcHBv\naW50bWVudCB0aW1lOgozOjA1cG0gRVNUIG9uIDIvNC8yMDIxCgpSZXF
+1ZXN0\nIHNlbnQ6CjE6MTBwbSBFU1Qgb24gMi8yLzIwMjEgYnkgUnVzcyBHcmFuZXkK\nClBhcnRuZXIgcmVzZXJ2ZWQ6CjEwOjEwYW0gRVNUIG9uIDIvMS8yMDIxIGJ5\nIFJ1c3MgR3JhbmV5CgpDaG9pY2UgbGlzdCBzaGFyZWQ6CjEwOjEwYW0gRVNU\nIG9uIDIvMi8yMDIxIGJ5IFJ1c3MgR3JhbmV5Cg==\n"
+      }
+    }
+  ],
+  "context": {
+    "encounter": {
+      "reference": "eYWExOnM9wfSn4pRqourt6Q3"
+    }
+  },
+  "docStatus": "final",
+  "resourceType": "DocumentReference",
+  "subject": {
+    "reference": "enh2Q1c0oNRtWzXArnG4tKw3"
+  },
+  "type": {
+    "coding": [
+      {
+        "code": "11506-3",
+        "system": "http://loinc.org"
+      }
+    ]
+  }
+}
+
+```
+
+In the example payload above, LOINC code [11506-3](https://loinc.org/11506-3/) is a progress note.  If you would like us to send AVS payloads, we will need you to provide the specific code and system values for your installation, which may look something like the following:
+
+```json
+ "type": {
+    "coding": [
+      {
+        "code": "304100010",
+        "system": "urn:oid:1.2.840.114350.1.13.361.2.7.4.737880.5010"
+      }
+    ]
+  }
+```
+
+#### **Testing (Progress Note)**
+
+Log into Aidin and begin by creating a new referral for the patient. Then, navigate to the Provider Search tab and enter the required search criteria, before clicking "Save and Search." Once the list of providers populates, click the green button to send the referral to the selected providers. You will then be prompted to set a start of service date and a deadline; once these fields are completed, click "Send to Provider." 
+
+Click on "Manage" in the top-right corner of the Patient Details tab and select "Send to Medical Records." From the list, check "Referral Details," then click "Confirm."  
+
+To verify that the note  was successfully sent, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. To verify the successful transmission of the note, navigate back to EPIC and confirm that the Progress Note (Referral Details) appears in the Progress Notes section of the patient’s chart.
+
+#### **Testing (AVS Note)** 
+
+On the Overview tab, navigate to the “0 of 6 Providers Available” section and click the ellipsis (...) under “Manage” then click “Reserve Provider” to reserve a provider for the referral.
+
+Click on "Manage" in the top-right corner of the Patient Details tab and select "Send to Medical Records." From the list, check "AVS details," then click "Confirm." Please note that the AVS details will remain unchecked until a provider is reserved on the referral.  
+
+To verify that the note  was successfully sent, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. Then, navigate back  to Epic and confirm that the AVS details appear in the AVS print-group section of the patient’s chart.
+
+## Appendix 9: HL7 MDM Configuration 
+
+Aidin sends documents to your EHR and Enterprise Content Management system using the HL7 v2.x MDM^T02 (new) / 08 (update) message types. Both TCP MLLP and HTTPS protocols are supported. 
+
+Each document is tagged using a configurable document ID. By default, Aidin uses REFERRAL-ID-\<id\>-\<type\>-PDF. You will need to route documents to the appropriate section in Epic based on TXA and OBX segment values.  Aidin sends the following types of documents, depending on the modules that are in scope for this integration. Aidin suggests mapping all of these document types. 
+
+| Document Type | Document ID |
+| :---- | :---- |
+| Patient Choice | REFERRAL-ID-\[Aidin Referral ID\]-PATIENT-CHOICE-PDF |
+| Contacted Providers | REFERRAL-ID-\[Aidin Referral ID\]-CONTACTED-PROVIDERS-PDF  |
+| Important Message from Medicare (IMM) | REFERRAL-ID-\[Aidin Referral ID\]-IMM-PDF |
+| Medicare Outpatient Observation Notice (MOON) | REFERRAL-ID-\[Aidin Referral ID\]-MOON-PDF  |
+| Hospital-Issued Notices of Noncoverage (HINNs) | REFERRAL-ID-\[Aidin Referral ID\]-HINN-PDF |
+| Notice of Observation | REFERRAL-ID-\[Aidin Referral ID\]-NOTICEOFOBS-PDF |
+
+#### **HL7 Message Structure** 
+
+All MDM messages follow the standard HL7 format with these segments:
+
+* **MSH** (Message Header) \- Contains routing and control information  
+* **PID** (Patient Identification) \- Patient demographic information  
+* **PV1** (Patient Visit) \- Visit/encounter information  
+* **TXA** (Transcription Document Header) \- Document metadata  
+* **OBX** (Observation/Result) \- Document content
+
+Trigger Events
+
+- **T02** \- Document creation (new document)  
+- **T08** \- Document update/edit (existing document)
+
+Note: The system automatically determines which trigger event to use based on whether a previous message exists for the same document type and referral. This behavior is configurable – some customers prefer that documents are always sent as “new” instead of “updated” to make sure that the message is handled appropriately in Epic. Please let Aidin know which you prefer.
+
+#### **Sample Messages** 
+
+1\. T02 Text Message (Referral Details)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T02|825|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-DETAILS|||||AU||AV
+OBX|1|FT|^details|1|Patient:~John Doe~~MRN:~999888~~Aidin Request ID:~999888~~Level of care reserved:~Transportation~~Partner Reserved:~Manorcare Nursing Home, Alexandria, VA 22039 703-222-2222~~Clinical needs requested:~wound care, physical therapy~~Geography searched:~15 miles around 90210~~Start of Service:~10/12/2020~~Pickup/appointment time:~3:05pm EST on 2/4/2021~~Request sent:~1:10pm EST on 2/2/2021 by Russ Graney~~Partner reserved:~10:10am EST on 2/1/2021 by Russ Graney~~Choice list shared:~10:10am EST on 2/2/2021 by Russ Graney~|||||||||||
+```
+
+2\. T08 Text Message (Referral Details Update)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T08|825|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-DETAILS|||||AU||AV
+OBX|1|FT|^details|1|Patient:~John Doe~~MRN:~999888~~Aidin Request ID:~999888~~Level of care reserved:~Transportation~~Partner Reserved:~Manorcare Nursing Home, Alexandria, VA 22039 703-222-2222~~Clinical needs requested:~wound care, physical therapy~~Geography searched:~15 miles around 90210~~Start of Service:~10/12/2020~~Pickup/appointment time:~3:05pm EST on 2/4/2021~~Request sent:~1:10pm EST on 2/2/2021 by Russ Graney~~Partner reserved:~10:10am EST on 2/1/2021 by Russ Graney~~Choice list shared:~10:10am EST on 2/2/2021 by Russ Graney~|||||||||||
+```
+
+3\. T02 PDF Message (Patient Choice List)
+
+```
+MSH|^~\&|AIDIN||EPIC||20211201170102||MDM^T02|826|T|2.3
+PID|||MRN1234567890^^^^MRN||DOE^JOHN^E||19501201|M|||||||||||
+PV1|1||||||||||||||||||CSN0987654321
+TXA||PN||20211201170102|FAC^WORKER^CASE^^^^^^Sending Facility|||||||^^REFERRAL-ID-1650-PATIENT-CHOICE-PDF|||||AU||AV
+OBX|1|ED|^patient_choice_pdf|1|^^PDF^Base64^JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCgoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+CmVuZG9iagoKMyAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDIgMCBSCi9NZWRpYUJveCBbMCAwIDYxMiA3OTJdCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0YxIDQgMCBSCj4+Cj4+Ci9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoK...|||||||||||
+```
+
+#### **Field Descriptions** 
+
+MSH (Message Header) Segment
+
+* **Field 1**: Field separator (|)  
+* **Field 2**: Encoding characters (^\~\\&)  
+* **Field 3**: Sending application (AIDIN)  
+* **Field 4**: Sending facility (configurable)  
+* **Field 5**: Receiving application (EPIC)  
+* **Field 6**: Receiving facility (configurable)  
+* **Field 7**: Date/time of message (YYYYMMDDHHMMSS)  
+* **Field 9**: Message type (MDM^T02 or MDM^T08)  
+* **Field 10**: Message control ID (unique identifier)  
+* **Field 11**: Processing ID (T for test, P for production)  
+* **Field 12**: Version ID (2.3)
+
+PID (Patient Identification) Segment
+
+* **Field 3**: Patient ID list (MRN with identifier type)  
+* **Field 5**: Patient name (Last^First^Middle)  
+* **Field 7**: Date of birth (YYYYMMDD)  
+* **Field 8**: Administrative sex (M/F)
+
+PV1 (Patient Visit) Segment
+
+* **Field 1**: Set ID (1)  
+* **Field 19**: Visit number (CSN \- Contact Serial Number)
+
+TXA (Transcription Document Header) Segment
+
+* **Field 2**: Document type (PN for progress note, or configurable)  
+* **Field 4**: Activity date/time  
+* **Field 5**: Primary activity provider (facility code^last^first^^^^^role)  
+* **Field 12**: Unique document number (format: ^^REFERRAL-ID-{id}-{document-type})  
+* **Field 17**: Document completion status (AU \- authenticated)  
+* **Field 19**: Document availability status (AV \- available)
+
+OBX (Observation/Result) Segment
+
+* **Field 1**: Set ID (1)  
+* **Field 2**: Value type (FT for formatted text, ED for encapsulated data)  
+* **Field 3**: Observation identifier (document name)  
+* **Field 4**: Sub-ID (1)  
+* **Field 5**: Observation value (text content or Base64 encoded PDF)
+
+Text Documents (FT Value Type)
+
+* Used for referral details when configured as text  
+* Content is formatted text with \~ as line separators  
+* Directly readable in the OBX-5 field
+
+PDF Documents (ED Value Type)
+
+* Used for generated PDFs (patient choice lists, contacted providers, forms)  
+* Content is Base64 encoded in OBX-5 field  
+* Format: ^^PDF^Base64^{base64-encoded-content}  
+* May include patient banner stamps with demographic information
+
+#### **Testing** 
+
+Users will need access to the Epic test environment (e.g EPIC TST, SUPT etc)
+
+Once logged into Aidin, locate a test patient within Aidin that was originally created in the Epic test environment and proceed to create a referral for that patient. Within the Patient Details tab, click on "Generate a Form".
+
+Identify the document that is intended to be sent to EPIC, then click "Fill Out Form." After completing the form, attach a signature and select "Attach Document." Next, click on "Manage" in the upper-right corner of the Patient Details tab and choose "Send to Medical Records." Check the box for the document you just attached and then select "Confirm" to send it.
+
+To verify that the document was successfully transmitted, navigate to the Overview page in Aidin and click "View All" under the Latest Activity section. This will confirm whether the document has been sent. Then, open Epic, access the patient’s chart, and go to the Media tab—here, you should find the document that was sent from Aidin now available in the patient’s record.
+
+The Patient Choice List option appears after a referral is created, a provider search has been conducted, and the referral deadline has passed. The user must also click  "Print the Patient Choice List" for it to be fully enabled. 
+
+The Contacted Providers List becomes accessible once providers are searched and both a start of service date and deadline have been set
+
+[^1]:  Allowing domains is preferable to allowing IP addresses from a disaster recovery perspective.
+
+[^2]:  Name subject to change.

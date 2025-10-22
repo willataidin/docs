@@ -1,68 +1,100 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Aidin Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#fc2f5c",
+    "light": "#fc2f5c",
+    "dark": "#3c4277"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "For Senders",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Overview",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "index"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Health System Integration Guide",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "integration/integration",
+              "integration/essential",
+              "integration/advanced",
+              "integration/appendix1",
+              "integration/appendix2",
+              "integration/appendix3",
+              "integration/appendix4",
+              "integration/appendix5",
+              "integration/appendix6",
+              "integration/appendix7",
+              "integration/appendix8",
+              "integration/appendix9"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Care Management",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "referrals/referrals"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Utilization Management",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "authorizations/authorizations"
+            ]
+          },
+          {
+            "group": "Post-Acute User Guide",
+            "pages": [
+              
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "For Receivers",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
-              "api-reference/introduction"
+              "receivers/overview"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Reports",
             "pages": [
+              "receivers/reports"
+            ]
+          },
+          {
+            "group": "Event Subscription",
+            "pages": [
+              "receivers/integration"
+            ]
+          },
+          {
+            "group": "Using Mintlify",
+            "pages": [
+              "quickstart",
+              "development",
+              "essentials/settings",
+              "essentials/navigation",
+              "essentials/markdown",
+              "essentials/code",
+              "essentials/images",
+              "essentials/reusable-snippets",
               "api-reference/endpoint/get",
               "api-reference/endpoint/create",
               "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/endpoint/webhook",
+              "ai-tools/cursor",
+              "ai-tools/claude-code",
+              "ai-tools/windsurf"
             ]
           }
         ]
@@ -71,33 +103,33 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
+          "anchor": "Get Help",
           "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "icon": "question"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Aidin Status",
+          "href": "https://status.myaidin.com",
+          "icon": "info"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/light.png",
+    "dark": "/logo/light.png"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@myaidin.com"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Aidin Application",
+      "href": "https://next.myaidin.com"
     }
   },
   "contextual": {
@@ -113,10 +145,15 @@
    ]
   },
   "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+  "socials": {
+    "twitter": "https://twitter.com/yourhandle",
+    "github": "https://github.com/yourorg"
+  },
+  "links": [
+    {
+      "label": "Privacy Policy",
+      "href": "/privacy"
     }
-  }
+  ] 
+}
 }

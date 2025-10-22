@@ -1,0 +1,96 @@
+---
+title: 'Advanced Integrations'
+description: ''
+---
+
+Once Essential integrations are completed, referral workflows can be improved and data sharing made more seamless by configuring Aidin to talk to your EHR via FHIR, and as necessary, direct HL7 MDM messages. We can use this access to pull patient documents from your EHR, send progress notes, after-visit-summary (AVS) data, and push documents (such as patient choice lists) back to your systems.  Subscribers of certain Aidin modules can also have their inbound fax numbers ported to Aidin’s inbound fax service to allow documents to enter Aidin directly from payor and post-acute partners. Finally, simple Aidin’s workflows can be made available directly within Epic using our Epic CRN integration.
+
+### **“Pull” Document Retrieval**
+
+Aidin supports a standards-based FHIR integration for securely retrieving patient documents directly from your EHR via the Patient, Encounter, DocumentReference and Binary endpoints. Individual patient attachments and packaged reports must be available as DocumentReference resources explicitly tied to the patient’s encounter. This is useful for retrieving static documents that are already associated with the patient’s chart, as opposed to the dynamic documents that are often created on demand and must be “pushed” to Aidin via SFTP or Printing.
+
+[Appendix 4](#appendix-7:-fhir-integration-setup-\(also-known-as-epic-app-orchard-handshake\)) describes the information Aidin needs from your team to interface with your EHR via FHIR. Once this information has been provided and the appropriate OAuth2 scopes granted, Aidin can use the to retrieve the list of documents associated with a patient Encounter, then the documents themselves. 
+
+### **AVS and Progress Notes**
+
+Aidin supports sending two types of structured, non-PDF data back to Epic over the FHIR DocumentReference.Create endpoint.  Both require you to complete the “Epic App Orchard Handshake” process to allow Aidin to authenticate via OAuth2. Please see [Appendix 7](#appendix-7:-fhir-integration-setup-\(also-known-as-epic-app-orchard-handshake\)) for both AVS and Progress Note integrations.
+
+#### **After Visit Summaries (AVS)** 
+
+After Visit Summary (AVS) Integration allows care managers to send key referral details from Aidin back to the EMR. When a provider is reserved, Aidin sends comprehensive discharge destination information such as: 
+
+* Provider details: Provider type, name, full address, phone and fax  
+* Care timing: Start of care date (discharge date) or pickup time for transportation
+
+**Sample AVS note**
+
+Aidin can be configured to send referral updates or care instructions directly into the After Visit Summary (AVS) provided to the patient.  There is a great deal of variation in where and how our customers want this to appear in the AVS; Aidin cannot provide guidance beyond the schema of the FHIR message that we deliver (see [Appendix 8](#appendix-8:-sample-fhir-documentreference.create-payloads)) using DocumentReference.Create. This is an integration that requires you to engage your Epic Technical Services team. 
+
+AVS updates to your EHR can be either manual or automated from Aidin.  Example trigger events can be based on specific referral events, such as:
+
+* New reservations on a referral  
+* Changes to the placement on a reserved referral:  
+  * Cancel the reserved referral.  
+  * Make changes to the reserved provider.  
+  * Restarting the referral using “Skip to Task”.  
+  * Reopen the deadline to invite new providers.  
+  * Receiving user marks that the patient is no longer coming.
+
+Please let your Aidin Implementation Manager know whether you would prefer manual or automated events, as well as which events should trigger an update.
+
+#### **Progress Notes**
+Aidin can generate and send referral details that appear as a text summary in the Progress Notes tab in Epic.  This integration also makes use of the DocumentReference.Create endpoint, but with significantly less work on the part of your Interface team. Documents created with the Progress Note coding should automatically appear in your Epic system. Please see [Appendix 8](#appendix-8:-sample-fhir-documentreference.create-payloads) for more details about the schema and coding of these messages. 
+
+Progress Notes use case enables health systems to automatically send detailed referral documentation to Epic systems when specific clinical events occur such as: 
+
+* Patient: Full name  
+* MRN: Patient medical record number  
+* Aidin Request ID: Aidin referral number  
+* Level of care reserved: Provider type  
+* Partner Reserved: Provider name, city, state, zip and phone  
+* Clinical needs requested: Care types  
+* Geography searched: Search radius and zip code or county name  
+* Start of Service: Start of care date
+
+###   **Medical Document Management (MDM)** 
+
+Aidin can be configured to send structured documents (e.g., PDFs) to Epic, where they are stored in the patient’s chart—typically in the Media or External Documents section. This is done using HL7 v2.x MDM^T02  (new document) or MDM^T08 (updated document) message types.  Some customers prefer that Aidin sends all messages as “new” documents; please make it clear to your Implementation Manager how you want Aidin configured. 
+
+If you would like to enable this configuration, Aidin will need the endpoint and port where your Epic system will receive inbound HL7 messages. This is generally provided by your EHR Interface team.  For more details about how to configure the MDM document integration please see [Appendix 9](#appendix-9:-hl7-mdm-configuration). 
+
+### **Onbase Document Storage**
+
+Aidin can also be configured to send structured documents (e.g., PDFs) to your EHR via Onbase, a common enterprise content management system. The standard workflow for this integration follows several key steps: initiate upload, upload document, assign keywords, and confirm archival into Onbase. If you have specific HIMS compliance requirements—such as stamps, metadata or keyword mappings—for documents transmitted to Onbase, Aidin can work with your HIMS IT team to satisfy these requirements. 
+
+If you would like to enable this configuration, Aidin will need the Onbase endpoints, any proxy/gateway authentication details, and documentation compliance requirements.
+
+### **Inbound Fax** 
+
+Aidin can be configured to receive inbound documents through a dedicated fax number to support both payor and post-acute authorization workflows. If your team prefers to reuse an existing fax number you will need to complete a fax number port. Aidin is also able to assign you a new fax number. Please communicate your preference to your Aidin Implementation Manager.
+
+### **Epic CRN** 
+
+Health systems that are using Epic’s Community Resource Network (CRN) module to send referrals can take advantage of Aidin’s provider directory and proprietary matching system, as well as other Aidin referral management innovations, directly within their EHR using Aidin’s Epic CRN integration. This allows Care Managers to automate referral submissions, receive provider response notification, and close the loop on care completion for many referral types without having to log into Aidin.
+
+The CRN module supports simple referral management workflows such as requesting home care from a clinic visit or a non-emergency transport ride back home. Managing complex workflows or edge cases still requires care managers to log into the Aidin’s platform.
+
+Tight collaboration between Aidin, Epic build team for your organization, and care management leadership will be required to implement this solution for your team. You can start the process by connecting with your Epic representative to request the CRN module and naming Aidin as your referral management vendor.
+
+## Application Content
+
+Before launch, Aidin needs to configure menus, document templates, and other workflows with your data to optimize your experience.  Aidin will share a spreadsheet to facilitate this exchange of information.  The first tab of the worksheet provides a template through which you provide the facilities of your system. Tab 1 is a pre-requisite to Essential integrations.  **Aidin recommends that you save this spreadsheet to Sharepoint (or your equivalent productivity suite) and then invite the Aidin team to access it. This allows multiple users to provide the information we need without having to email attachments back and forth.**
+
+### **Post-Acute Care Network & Outreach** 
+
+Aidin conducts outreach to your existing network of post-acute providers via automated email and fax campaigns. Aidin cross-references and de-duplicates this information against its existing database of providers before outreach begins, but incomplete information can lead to a poor experience for your PAC partners. Please provide this information on tab 3 of the accompanying worksheet.
+
+### **Insurance Information** 
+
+Aidin needs a one-time extract of all insurance providers your health system has interacted with in the past year. This data helps Aidin ensure accurate tracking of insurance information and supports processing authorization requests and finding the right in-network providers. The data provides valuable insights into the your payer mix and is crucial for aligning referral processes with provider and payor requirements. Please provide this information on tab 4 of the accompanying worksheet.
+
+### **Bulk User Upload** 
+
+Aidin prefers not to bulk add users, but in some implementations – specifically those without “auto-provisioned” users, this becomes a requirement. Not only does this create an extra step for both sides during an implementation, it does not align with best practice – your identity management solution (IdP) should be the source of truth for who can access Aidin on your behalf, not a spreadsheet. 
+
+If bulk user add is a requirement because your team cannot configure SSO or groups/SAML claims, please complete the “Users” tab in the accompanying worksheet. Keep in mind that after go-live, your Aidin admins will need to manage user access directly in the platform.  Aidin cannot manage user access on your behalf post-launch.
+

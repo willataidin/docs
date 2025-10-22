@@ -1,0 +1,16 @@
+---
+title: 'Implementation Guide'
+description: ''
+---
+
+Aidin enables referral senders and receivers to collaborate in a fully integrated online platform to coordinate patient care transitions. Aidin Event Subscriptions allow external systems to subscribe to real-time updates on patient referral events. This guide provides details on how to implement a subscription.
+
+Please note, event subscriptions are a one-way notification system. Aidin does not offer a traditional RESTful API for updating referral statuses, and Aidin does not allow automated, bot-driven login to its web application. Subscription consumers are expected to interact with Aidin referrals through approved methods.  Bot access is a violation of our terms of service and grounds for permanent deactivation.  In some cases, events will include links to documents associated with the referral. These links can be used one-time only. Please design your system accordingly.
+
+Aidin Event Subscriptions are built on top of AWS Simple Notification Service (SNS) to allow consumers as much flexibility as possible.  You are not required to have an AWS account, but you will need a web service capable of accepting POST requests from SNS. The AWS documentation is a helpful place to go for additional information.  If your application is on AWS and you prefer to set up an SNS-native subscription, the rest of this guide may not directly apply. Please let us know how you intend to consume messages.
+
+## What you'll need
+
+* An executed commercial agreement – this feature is for enterprise customers only. Please reach out to our team if you have not already done this.
+* An active Aidin user account – the “integration owner” – associated with the post acute care providers whose referrals you intend to receive notifications for. 
+* A web endpoint capable of accepting POST requests with JSON payloads from AWS SNS.

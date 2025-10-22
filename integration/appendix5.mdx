@@ -1,0 +1,80 @@
+---
+title: 'IPP Printing'
+description: ''
+---
+ 
+
+The Aidin application allows any user whose organization has IPP printing enabled to set up a printer on their own machine.  Aidin does not expect end users to go through this workflow. Your team must advise on how to automate this process with whichever endpoint management suite is in use at your organization. The first step is verifying that manual printing can be accomplished. 
+
+#### **Step 1: Create Printer Credentials** 
+
+Log in to Aidin. Navigate to Settings → Aidin Integrations, open the Settings menu, click "Aidin Integrations."  
+
+This link will open the Aidin Printer management page, displaying printer credentials associated with your user account. Printer credentials are stored in a secure unrecoverable format so there is no way to retrieve a printer password after creation. 
+
+IPP printers can be disabled and new credentials created by clicking “Add New Printer Credentials.” This will automatically provision and create a printer with a user name and password. 
+
+#### **Step 2: Conduct a Test Print** 
+
+On a Windows machine, open Printer and Scanners in Windows Settings, click Add a Printer, “The printer that I want wasn’t listed.” then “Add manually.”
+
+Copy the Virtual Printer URL obtained from Aidin from the Aidin Integrations page.
+
+Choose “Select a shared printer by name” then paste the url. Select Microsoft PS Class Driver (or another compatible PostScript driver).   
+Click “OK” to save the printer. A successful install should be confirmed on the next screen.  Click “Next” to finalize the installation. The newly-installed printer should now appear in the list of devices. Click the Aidin printer “Printer properties” option, then locate the Ports tab. Click “Configure port”, then under Security options, enter the credentials you copied from the Aidin printer credential that you created in Step 1\.
+
+At this point, you should be able to print a test document to Aidin. See “Finding Printed Documents” in the onboarding and training materials for more information about how this workflow works in the application.
+
+#### **Step 3: Identify how you will roll out these changes across your user base** 
+
+Aidin expects your staff to roll out printer configurations as needed using your endpoint management suite.  These processes are generally custom to the install environment; as  
+such, this guide is limited on prescribing an official implementation path.
+
+The Windows `printui` utility may be useful on WIndows 10 and above:
+
+Sandbox
+
+```shell
+printui /b "Aidin Printer" /x /n "Aidin Printer" /if /f%windir%\inf\ntprint.inf /r
+"https://printer.sandbox.myaidin.com:631/" /m "Microsoft PS Class Driver"
+```
+
+Production
+
+```shell
+printui /b "Aidin Printer" /x /n "Aidin Printer" /if /f%windir%\inf\ntprint.inf /r "https://printer.next.myaidin.com:631/" /m "Microsoft PS Class Driver"
+```
+
+Aidin supports programmatically created user credentials based on a shared secret and user’s email address using HMAC (Hash-based Message Authentication Code) with SHA-256. Once you have identified how you will install user-level printer credentials on each machine, Aidin will provide a shared secret and you’ll need to compute a password using the following pseudo-code (and example PowerShell) code:
+
+```shell
+param(
+    [string]$Email = "user@example.com",
+    [string]$SharedSecret = "supersecret"
+)
+
+function Compute-DeterministicPassword {
+    param (
+        [string]$Email,
+        [string]$SharedSecret
+    )
+
+    # Normalize the email: lowercase and trim whitespace
+    $normalizedEmail = $Email.ToLower().Trim()
+
+    $hmac = New-Object System.Security.Cryptography.HMACSHA256
+    $hmac.Key = [Text.Encoding]::UTF8.GetBytes($SharedSecret)
+    $emailBytes = [Text.Encoding]::UTF8.GetBytes($normalizedEmail)
+
+    $hashBytes = $hmac.ComputeHash($emailBytes)
+    $base64Password = [Convert]::ToBase64String($hashBytes)
+
+    # Trim padding and restrict to 16 characters
+    $safePassword = $base64Password.TrimEnd('=').Substring(0, 16)
+
+    return $safePassword
+}
+
+$password = Compute-DeterministicPassword -Email $Email -SharedSecret $SharedSecret
+Write-Output "Generated password: $password"
+```

@@ -1,0 +1,32 @@
+---
+title: 'Virtual Print to Aidin'
+description: ''
+---
+
+Aidin offers a Windows print driver solution that can be installed on end user workstations to allow the user to authenticate to Aidin, print documents to Aidin, and manually associate the documents with a patient.
+
+*While still supported, this is considered a legacy workflow, as it requires the driver to be installed and kept up-to-date on each Windows endpoint device, can be complicated to manage in thin client environments, and is not compatible with non-Windows devices. IPP printing is the preferred printing option for individually-issued devices, and SFTP and FHIR document retrieval are preferred for zero-friction document exchange without needing to print anything from the endpoint device at all. All other workflows automate the step of associating the document with the patient based on MRN, CSN, etc. matching ADT data.*
+
+#### **Installation** 
+
+The driver is delivered with an MSI installer tested on current Microsoft-supported versions of Windows 10 and 11\. Various MSI switches and a custom .INI file can be tuned to support unusual configurations, but the currently recommended installation for the latest Windows 10 and 11 platforms is:
+
+```shell
+msiexec /i Setup.msi USE_UPDATER=0 INSTALL_GHOSTSCRIPT=0 CLEAN_CONFIG=1 ADDLOCAL=MainFeature
+```
+
+This performs a minimal clean install of the driver’s main feature only and disables the internal updater in favor of the enterprise’s own device management. Login will be done via SAML SSO with the enterprise’s IdP.
+
+#### **Testing** 
+
+First open File Explorer on your computer. Use the search bar at the top-right corner to look for the "Print To Aidin" folder, or navigate directly to its known location if you have it bookmarked or memorized. Once you've located the folder, open it and look for a file named configuration.ini. Depending on your folder view settings, this file may appear as “Configuration”.
+
+Next, right-click on the configuration.ini file and choose “Open with” → “Notepad.” To ensure you can make and save edits, it's important to open Notepad as an administrator. You can do this by searching for Notepad in your Start menu, right-clicking it, and selecting “Run as administrator.” Once Notepad is open, use the File menu to open the configuration.ini file from within Notepad.
+
+Inside the file, look for the section labeled: “The base address URL for API requests.”  
+Update the value in that section to the following  address: [open.sandbox.myaidin.com](http://open.sandbox.myaidin.com)
+
+After making this change, be sure to save the file. If the printer was installed without SSO, you’ll need to reach out to Aidin’s Configuration Manager to obtain login credentials for the test printer. if the printer was installed with SSO capabilities, you should now be able to print a test document directly to Aidin. For guidance on accessing the printed document within the application, refer to the “Finding Printed Documents” section in the onboarding and training materials.
+
+**Note**: To ensure printer functionality in the live environment, the base URL must be updated to **https://open.myaidin.com** in the production configuration file.
+

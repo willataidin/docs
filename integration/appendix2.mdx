@@ -1,0 +1,109 @@
+---
+title: 'Launch Button Configuration'
+description: ''
+---
+
+## Procedures for Epic
+
+These set up procedures enable launching Aidin from Epic via a Secure Token Service (STS) SAML 2.0 Web Link, opening the Aidin platform in an external browser window from within the patient chart. This integration supports workflows where care managers need to initiate referrals through Aidin without interrupting their existing Epic session.
+
+#### **Step 1: Installation Information**
+
+Navigate to the **Installation Definition** in your system and configure the following:
+
+| Field | Value |
+| :---- | :---- |
+| **Type** | PACS |
+| **Model record** | STS SAML 2.0 WEB LINK |
+| **Auto-start?** | No |
+| **Patient ID Type** | MRN |
+| **Preload amount** | 0 |
+
+Leave the following blank unless instructed:
+
+* DICOM server  
+* Server name  
+* Client ID  
+* Is WebRTC  
+* Order match ext  
+* Context mod ext  
+* OAuth2 token  
+* Login domain
+
+#### **Step 2: Set Installation Mnemonic Values**
+
+Configure each mnemonic as follows:
+
+| Name | Value |
+| :---- | :---- |
+| **STSCONFIGNAME** | `aidin (`This should match the configuration in Epic's Secure Token Service setup for Aidin) |
+| **LAUNCHTYPE** | `0` (Indicates URL or command execution via default browser) |
+| **CONTEXT** | `username=%USEREMAIL%&mrn=%PATID%&name=%USEREMAIL%` *(Maps user and patient identifiers into query params)* |
+| **ADDLPOSTPARAMS** | *(Leave blank)* |
+| **OVERRIDEURL** | `https://sandbox.myaidin.com/saml/[idp-slug]/consume?sp_redirect=true` *(Aidin will provide Override URL)*`e.g.(https://sandbox.myaidin.com/saml/aidin_epic) /consume?sp_redirect=true` ( The actual SAML 2.0 endpoint URL used to consume the assertion. |
+| **SUBJECTNAMEID** | *(Leave blank)* |
+| **USEEDGEBROWSER** | *(Leave blank or set depending on whether Edge is required)* |
+| **DEFAULTWINDOWSIZE** | *(Optional – usually left blank unless window size control is needed)* |
+
+#### **Step 3: Testing** 
+
+Launch Epic and navigate to the button you completed for your build. This may be located in the Navigator section or the dropdown menu in EPIC, depending on where your organization has chosen to place it.  Click the Launch button, then confirm that Aidin opens in an external window and logs you into the sandbox environment.
+
+#### **Step 4: Move from Sandbox to Production** 
+
+When verified, update `OVERRIDEURL` from: 
+
+`https://sandbox.myaidin.com/saml/[idp-slug]/consume?sp_redirect=true`
+
+to the production equivalent:
+
+[`https://next.myaidin.com/saml/[idp-slug]/consume?sp_redirect=true`](https://next.myaidin.com/saml/[idp-slug]/consume?sp_redirect=true)
+
+## Cerner
+
+These set up procedures enable launching Aidin from Cerner PowerChart via CyberArk Identity (SAML 2.0 IdP). This integration supports workflows where care managers need to initiate referrals through Aidin without interrupting their existing Cerner session.
+
+##### **Step 1: Configure CyberArk Identity (IdP) for Aidin**
+
+1. **Create a Custom SAML App**  
+   * Navigate to **Admin Portal → Apps (Web Apps) → Add Web Apps → Custom → SAML → Add.**  
+   * Name the app **Aidin**.  
+2. **Trust / SAML Settings**  
+   * **ACS (Assertion Consumer Service) URL:** Provided by Aidin  
+   * **NameID:** `EmailAddress` (set to user’s email address)  
+   * Save configuration.  
+3. **Assign Users/Groups**  
+   * Assign the Aidin app to the appropriate clinical groups (case management, nursing, physicians).  
+4. **Enable Direct IdP-Initiated Launch**  
+   * Open the Aidin app → **Description page** → copy the **App Key**.  
+   * *(Optional)* In **Policy**, enable “Bypass Login MFA” when launching this app, if allowed by your security policies.  
+5. **Generate IdP-Initiated Launch Link**  
+   * Construct the launch URL using your tenant and App Key:  
+      `https://<yourTenant>.id.cyberark.com/run?appkey=<appKey>`  
+     This URL will be used by Cerner to launch Aidin.  
+6. **Share Details with Aidin**  
+   * Provide the IdP metadata XML and confirm both **Sandbox** and **Production** launch URLs with Aidin.
+
+
+
+### **Step 2: Add Aidin Link in Cerner PowerChart (Links Toolbar)** 
+
+1. Open the **Links toolbar** in PowerChart.  
+2. From the toolbar menu, select **Add or Remove Buttons → Customize → Add.**  
+3. Configure the following:
+
+| Field | Value |
+| :---- | :---- |
+| Name | Aidin |
+| URL | Paste the CyberArk IdP launch link (from Step 1\) |
+| Target | External browser window (required for Aidin launch) |
+
+4. Save and close. The **Aidin button** will now appear in the Links toolbar.
+
+### **Step 3: Testing** 
+
+Launch Cerner PowerChart and select the **Aidin button** from the Links toolbar. Confirm that Aidin opens in an external browser window and logs you into the sandbox environment.
+
+### **Step 4: Move from Sandbox to Prod** 
+
+Once verified, update the launch URL to point to the **Production** CyberArk tenant link (Aidin will confirm the correct production URL).
