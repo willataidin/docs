@@ -117,7 +117,7 @@
   },
   "logo": {
     "light": "/logo/light.png",
-    "dark": "/logo/light.png"
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
@@ -145,15 +145,13 @@
    ]
   },
   "footer": {
-  "socials": {
-    "twitter": "https://twitter.com/yourhandle",
-    "github": "https://github.com/yourorg"
-  },
-  "links": [
-    {
-      "label": "Privacy Policy",
-      "href": "/privacy"
-    }
-  ] 
-}
+    "links": [
+      {
+        "items": [
+          {"label": "Terms of Use", "href": "https://myaidin.com/terms"},
+          {"label": "Privacy Policy", "href": "https://myaidin.com/privacy"}
+      ]
+      }
+    ] 
+  } 
 }
