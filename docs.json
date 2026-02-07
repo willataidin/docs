@@ -22,36 +22,44 @@
           {
             "group": "Health System Integration Guide",
             "pages": [
-              "integration/integration",
-              "integration/essential",
-              "integration/advanced",
-              "integration/appendix1",
-              "integration/appendix2",
-              "integration/appendix3",
-              "integration/appendix4",
-              "integration/appendix5",
-              "integration/appendix6",
-              "integration/appendix7",
-              "integration/appendix8",
-              "integration/appendix9"
+              // "integration/integration",
+              // "integration/essential",
+              // "integration/advanced",
+              // "integration/content",
+              // "integration/appendix1",
+              // "integration/appendix2",
+              // "integration/appendix3",
+              // "integration/appendix4",
+              // "integration/appendix5",
+              // "integration/appendix6",
+              // "integration/appendix7",
+              // "integration/appendix8",
+              // "integration/appendix9"
             ]
           },
           {
             "group": "Care Management",
             "pages": [
-              "referrals/referrals"
+              // "referrals/referrals"
             ]
           },
           {
             "group": "Utilization Management",
             "pages": [
-              "authorizations/authorizations"
+              // "authorizations/authorizations"
             ]
           },
           {
             "group": "Post-Acute User Guide",
             "pages": [
               
+            ]
+          },
+          {
+            "group": "For IT Professionals",
+            "pages": [
+              // "trust/compliance",
+              // "trust/architecture"
             ]
           }
         ]
@@ -62,19 +70,19 @@
           {
             "group": "Overview",
             "pages": [
-              "receivers/overview"
+              // "receivers/overview"
             ]
           },
           {
             "group": "Reports",
             "pages": [
-              "receivers/reports"
+              // "receivers/reports"
             ]
           },
           {
             "group": "Event Subscription",
             "pages": [
-              "receivers/integration"
+              // "receivers/integration"
             ]
           },
           {

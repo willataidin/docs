@@ -1,0 +1,40 @@
+---
+title: "Aidin's Compliance & Information Security Program"
+description: ''
+---
+
+Aidin maintains a rigorous corporate information security program to ensure that our data, and the data you entrust to us, is adequately protected according to industry standards.
+
+## Regulatory and compliance frameworks
+
+### HIPAA
+Aidin is a HIPAA Business Associate and takes its responsibilities under the Privacy and Security rules seriously. We complete annual internal risk assessments, retrain our employees annually, and use protected health information only for the purpose for which it was entrusted to us.
+
+### SOC 2
+Aidin completed its most recent SOC 2 Type II audit in September 2025 for the period from May 23, 2025 to August 23, 2025. Aidin expanded the scope of its 2025 audit to include the Availability, Privacy and Confidentiality trust services criteria. Aidin expects its 2025 audit to be completed in late August of 2025.  Our report is available upon request. 
+
+### PCI DSS
+Aidin uses Stripe.js to collect credit card payments from post-acute care providers that need premium administrative features, and as such, conducts an annual self-assessment (SAQ-A). Users enter their card details in an iframe hosted by Stripe, meaning Aidin does not handle cardholder data (CHD) directly.  All elements of the payment page delivered to the customer’s browser originate only and directly from Stripe. Aidin does not store, process, or transmit any account data on our systems. Our PCI Attestation of Compliance is available upon request, but credit card processing is not in scope for Health System customers.
+
+### FedRAMP
+Aidin’s Post-Acute Referrals Module is authorized for FedRAMP Moderate Impact SaaS Services under FedRAMP Rev 4. We are listed in the FedRAMP Marketplace with an authorization status of In Process: Finalization. Aidin expects to complete a Rev 5 FedRAMP audit in fall of 2025.
+
+## Corporate network and facilities
+Aidin is a completely distributed company based in the United States with no corporate network or facilities to manage. If your organization has arranged to connect with Aidin via custom networking, that VPN tunnel terminates within the network of our legacy hosting partner, Aptible, or directly with AWS.  
+
+## End-user workstation management
+Aidin installs mobile device management (MDM) software on all employee workstations. We require encrypted disks, firewalls enabled, screen locks enabled, and operating system patching to be automatic on all devices. Our MDM requires that employees run the antivirus software provided by Aidin. Disks are encrypted with FileVault or Bitlocker using AES-XTS-128 with a 256 bit key or XTS-256-bit AES with a 256 bit key.
+
+## Server, container, and virtual machine management
+Aidin runs its primary AWS workload using Amazon’s proprietary security-focused [AWS Linux 2023 (AL23)](https://docs.aws.amazon.com/linux/al2023/ug/what-is-amazon-linux.html) operating system.
+
+We do not run antivirus in containers, due to their hardened nature and the very limited access that is available, however, we do run intrusion detection scans against both images and running containers on a weekly basis.  AWS GuardDuty’s runtime monitoring solution runs as a sidecar to each pod of application containers to detect and alert on any runtime injection or malware activity.  We also use static code and dependency analysis tools such as CodeQL, CodeClimate, and Brakeman to make sure that the software we run in those containers is up-to-date and secure.
+
+## Background checks and security awareness training
+Aidin requires all employees to regularly acknowledge their obligations under our Information Security program. We conduct periodic internal campaigns to test our team’s sensitivity to phishing scams and other forms of social engineering on an ongoing basis.  Aidin conducts criminal background checks on all new employees. 
+
+## Penetration testing and vulnerability review
+Aidin performs annual third-party, gray box penetration tests of its surface area. The most recent test was completed by 7ASecurity in May of 2025. Aidin has remediated or addressed all vulnerabilities.  Aidin conducts automated vulnerability scans using multiple vendors. Aidin’s security operations team meets monthly to review security bulletins, vulnerability scans, access control changes, and other security related work.
+
+## Disaster recovery
+Aidin has a documented Business Continuity and Disaster Recovery Plan and conducts an annual restoration exercise during which our regional failover RTO for the application is validated.  Our last disaster recovery exercise was conducted June 4, 2025. A backup of our production database was restored in us-west-2 (our recovery region) and the application fully validated in just over 2 hours.  Aidin captured several action items to improve timelines moving forward.

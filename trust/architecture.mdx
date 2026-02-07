@@ -1,0 +1,140 @@
+---
+title: 'Application Architecture'
+description: ''
+---
+
+Aidin is a cloud-based, multi-tenant web application hosted in AWS. Aidin cannot be self-hosted. Aidin’s key components are:
+* A containerized Rails application running in AWS Linux 23 containers in Amazon Fargate/Elastic Container Service . 
+* A “Postgres-flavored” Aurora RDS cluster with Multi-AZ failover and separated read instances.
+* AWS S3 for object storage.
+* Reporting is done with Mode Analytics and is in transition to self-hosted Metabase.
+
+Other AWS services in use: 
+* AWS Web Application Firewall (WAF)
+* AWS GuardDuty (threat detection, IDS)
+* AWS Inspector (vulnerability scanning)
+* AWS Shield (DDoS)
+* Redis “Elasticache” cache-layer
+* CloudWatch Logs
+
+## System requirements
+Aidin is compatible with modern web browsers including Microsoft Edge, Mozilla Firefox, Safari, and Google Chrome.
+
+## Environments 
+Aidin has two customer-facing application environments:
+https://sandbox.myaidin.com: A test environment containing your synthetic data that is accessible to your users as needed. Used for training and user acceptance testing.
+https://next.myaidin.com: The primary production environment.
+
+Aidin hosts an entirely separate set of AWS environments for its VA customers. Aidin has several auxiliary services that your users may interact with depending on how integrations are set up, including: 
+
+* sftp://sftp.next.myaidin.com (document retrieval/exchange)
+* sftp://sftp.sandbox.myaidin.com
+* https://open.myaidin.com (printing to Aidin)
+* https://open.sandbox.myaidin.com
+* https://connect.next.myaidin.com (ADT feeds)
+* https://connect.sandbox.myaidin.com
+
+Our Integration Guide outlines which of these services should be allowlisted during integration. 
+
+## Service level, RTO, and RPO
+Aidin strives for 100% uptime and takes commercially reasonable steps to ensure that the site is accessible during your team’s working hours. New features and bug fixes are deployed without downtime.  We may periodically schedule downtime during low-usage hours (nights and weekends) in order to upgrade components and perform maintenance. Aidin is committed to transparency and will use a third-party status page to provide a real-time assessment of our availability at https://status.myaidin.com. Aidin encourages you to subscribe if Aidin is a critical part of your workday. 
+
+Aidin employs a multi-datacenter approach for infrastructure redundancy and has the capacity for point-in-time recovery. In the event of a failure affecting one of our multiple datacenters, we are able to recover data (RPO) to within less than one minute of the failure. We also have the ability to redeploy Aidin completely to an alternate set of datacenters in another US region (us-west-2). In these cases, we can recover data to within less than 24 hours of the failure, and return to operations (RTO) within 12 hours.
+
+## User roles and access control
+The Aidin web application has an integrated role-based access control mechanism allowing individual users to be assigned a specific role for a given organization, location, or unit.
+
+### Read-Only User
+These users have the ability to see all of the information and communications related to referrals and workflows, but they cannot create or modify them.
+### User 
+This is a typical care management role and adds the ability to create and modify referrals.
+
+### Administrator
+This role provides further access to administrative tasks such as managing other users and their access, provider networks and other configurations.
+Access: Reporting
+
+In addition, any of the above roles can be assigned a designation that allows them to view Reports. Role assignments can be made by an Administrator using the Aidin web interface, or can be provisioned and adjusted automatically based on SAML assertions.
+
+### Authenticated signatory
+Aidin is often used internally to request authorization or signature from physicians who may not be traditional Aidin users. Aidin handles this situation by issuing a one-time login link that can be used by the receiving party to complete a signature.  
+
+## Encryption and authentication
+
+### Transport layer
+Browser connections conform to the TLS policy recommended by AWS, which prefers TLS 1.3, allows TLS 1.2, and excludes known weak cipher suites. TLS 1.3 connections with AES-256-GCM-SHA384 encryption are supported, and are the recommended strongest configuration for browsers.
+
+### Application data
+Aidin uses server-side encryption in S3 (SSE-S3) to store your data, as well as database, logs and backups. Amazon S3 server-side encryption uses 256-bit Advanced Encryption Standard Galois/Counter Mode (AES-GCM) to encrypt all uploaded objects.
+
+### Identity federation and multi-factor authentication
+Aidin requires that hospital systems take advantage of SAML 2.0 protocol support to enable SSO for their users. Aidin does not currently support OpenID Connect for identity federation. Aidin does not directly support MFA for user accounts. If this is a requirement for your organization, please configure your IdP to enforce MFA as your policies dictate. 
+
+### Passwords 
+User accounts not governed by an external identity provider are subject to the following requirements:
+* Passwords must be unique and exclusive
+* At least 8 characters in length
+* Must include at least three of the following character types: numeric, upper and lower case letters, and special characters (!@#$%, etc.). 
+
+Passwords for non-SSO users (typically post acute care providers) are salted, hashed, and encrypted in the Aidin database. 
+
+### Failed login attempts
+Aidin locks non-SSO user accounts after six consecutive failed login attempts and requires a password reset. 
+
+## Session management
+By default, Aidin times out user sessions after 15 minutes of inactivity. Aidin can be configured to allow a single concurrent browser session for a user. These settings cannot be changed in the application. Our implementation team configures it for you. Please reach out to our support team through the help desk if you’d like to change these configurations.
+
+## AI-assisted workflows
+For some feature sets, Aidin processes inbound documents using AI models to identify the patient, or in the case of prior authorization forms, the authorization decision.  Documents that we receive in structured pdf formats can be parsed and matched, in most cases, without AI, but only to a certain level of accuracy. Many faxed documents are sent to Aidin that require OCR processing before matching can occur. 
+
+Aidin uses AWS Textract (traditional machine learning and OCR) and Bedrock (Generative AI) for this purpose. Our AI features suggest to your human user the patient or decision but the user must review the suggestion for accuracy before the document is assigned.  If your organization is thinking about subscribing to Aidin’s Concurrent Review or Prior Authorization modules, or planning to send documents into Aidin using our SFTP or printing mechanisms instead of DocumentReference (FHIR) API retrieval, please be aware that AI technology is required in all but the simplest cases. To achieve satisfactory accuracy for your use case, Aidin may need to tune its identification algorithms with your data.
+
+## Application data
+
+### Residency
+All data is stored in US jurisdictions.
+
+### Backup
+Relational data is stored in an RDS-hosted Aurora Postgres database cluster configured in a replica set for high availability and automatic failover. We retain full nightly database-specific backups. Backups are stored in a different geographic region from the running database, and daily snapshots are retained for 14 days. We keep monthly snapshots for 2 years. All databases running in AWS’s us-east region are backed up to us-west. 
+
+Aidin uses AWS S3 for non-relational object storage, including uploaded or generated documents. S3 is designed to exceed 99.999999999% data durability. Additionally, S3 stores data redundantly across a minimum of 3 Availability Zones by default, providing built-in resilience against data loss. 
+
+### Retention
+We may retain your application data up to 60 days after contract termination or expiration. We purge application data according to the following schedule:
+* Notification logs after 90 days
+* ADT data feed records after 1 week
+* Unassigned attachments after 2 years
+* Patient data for all patients having no referrals and no current visits or visits discharged within a configurable retention period (defaults to 30 days)
+
+Aidin does not restore backups to purge data.
+
+## Implementation and configuration
+Aidin requires the following essential integrations to support basic referral management workflow: 
+* an HL7-compliant admission-discharge-transfer (ADT) feed from your EMR
+* a Single Sign On (SSO) set up using SAML 2.0
+* a “launch button” within your EHR that kicks off the SSO flow for users
+* bi-directional SFTP connectivity (document retrieval from your EHR, analytics data delivery)
+
+Aidin’s implementation team will work with your staff to accomplish technical integration steps and user training. The entire process typically takes 3 months. The following optional configurations are also available, depending on the additional modules your organization has opted to purchase:
+* Bi-directional connectivity back into the EMR for progress notes, after-visit-summaries (AVS). Aidin supports FHIR and HL7 MDM messages for this purpose.
+* Aidin can provide either an installed local print driver or access to an IPP print service that allows your Aidin users to more easily get the documents they need to manage care transitions into the Aidin application.
+* Some customers opt to have inbound fax numbers set up to send faxed documents directly into Aidin. This will require porting numbers if your team would like to reuse an existing number.
+
+During integration, your team will also need to provide extracts of data that are used to seed the Aidin database before the first use. This includes facility data, user groups, insurances, and your existing post-acute provider database.
+
+## Interoperability
+As a facilitator of referral information between your care transition team and your post-acute partners, Aidin provides many different types of interoperability.  Aidin supports bi-directional HL7 interoperability with your medical records system (ADT, FHIR, MDM). We also work with RESTful web services for various purposes (outbound fax, for example) on your behalf.  We support standards-compliant SAML 2.0-based identity federation (SSO).
+
+## Reporting
+Users with a reporting role can view and download a variety of reports directly within the application. Most customers prefer to have analytics-ready data delivered by SFTP for automated ingestion into their own analytics solutions. 
+
+## Software Development
+Aidin employs a team of staff software engineers located entirely in the continental United States. At any given time, we may have a small number of on-shore or “near-shore” consulting staff augmenting our team’s capabilities.  Aidin does not allow near-shore developers to access production environments.
+
+### Software development life cycle and security
+Aidin’s predominant SDLC is a two-week scrum. Code is promoted through a rigorous pull-request process with at least two senior developers approving.  Our repositories are configured to prevent merges without a pull-request.  Bugs and critical patches are deployed more frequently than every two weeks. Our code repository (Github) is configured for SSO.
+
+### Infrastructure as Code (IaC)
+Changes to our AWS environment are made through AWS Cloud Development Kit (CDK) code, pull-requested and reviewed by other infrastructure engineers. This allows us to quickly deploy the same stack elsewhere in AWS in a disaster recovery scenario. We use SSO to access our IaC repositories.
+
+### Dependencies
+Like all modern SaaS, Aidin depends on a long list of open-source dependencies. Our Github repository is configured to scan our dependency graph for known vulnerabilities and alert us as needed, and our continuous integration solution is configured to automatically reject any new dependencies with licenses that are not already explicitly allowed.
